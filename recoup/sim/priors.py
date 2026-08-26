@@ -279,3 +279,20 @@ FATIGUE_DECAY_PER_CONTACT: float = 0.62
 CHURN_HAZARD_PER_CONTACT: float = 0.018
 
 
+# ---------------------------------------------------------------------------
+# Issuer outages — correlated, not independent
+# ---------------------------------------------------------------------------
+
+# Real outages hit many payments on one issuer at once. Independent sampling would
+# make the batch far easier than reality and would flatter any strategy that
+# reacts to issuer health.
+# [ASSUMED] shape; [CITED] that UPI system-wide technical decline is now ~0.8%,
+# so outages are rare but bursty. https://productgrowth.in/insights/fintech/upi-payment-success-rates/
+ISSUERS: tuple[str, ...] = (
+    "HDFC", "SBI", "ICICI", "AXIS", "KOTAK", "PNB", "BOB", "YES", "IDFC", "INDUSIND",
+)
+ISSUER_OUTAGE_DAY_PROB: float = 0.035
+ISSUER_OUTAGE_SEVERITY: tuple[float, float] = (0.25, 0.85)
+ISSUER_OUTAGE_HOURS: tuple[int, int] = (2, 9)
+
+
