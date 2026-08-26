@@ -267,3 +267,15 @@ HOUR_MULTIPLIER: dict[range, float] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Contact fatigue
+# ---------------------------------------------------------------------------
+
+# Each additional contact in the window multiplies response probability by this,
+# and adds to churn hazard. This is why an unbounded nudger loses money: it
+# converts involuntary churn into voluntary churn.
+# [ASSUMED] Swept by the sensitivity harness.
+FATIGUE_DECAY_PER_CONTACT: float = 0.62
+CHURN_HAZARD_PER_CONTACT: float = 0.018
+
+
