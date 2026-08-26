@@ -300,3 +300,93 @@ class RevalidationOutcome:
     def blocking_rules(self) -> list[str]:
         return [g.rule_id for g in self.gate_results if g.verdict is GateVerdict.BLOCK]
 
+
+# ---------------------------------------------------------------------------
+# Engine
+# ---------------------------------------------------------------------------
+
+
+class PolicyEngine:
+    def __init__(self, rules: list[RuleSpec] | None = None) -> None:
+        self.rules = rules if rules is not None else load_rules()
+        missing = [r.id for r in self.rules if r.id not in PREDICATES]
+        if missing:
+            raise ValueError(
+                f"rules.yaml declares rules with no predicate implementation: {missing}. "
+                "A declared-but-unimplemented rule is a silently open gate."
+            )
+
+    # -- evaluation --------------------------------------------------------
+
+    def evaluate(
+        self,
+        event: RiskEvent,
+        candidates: list[CandidateAction],
+        ctx: GateContext,
+        diagnosis: Diagnosis | None = None,
+    ) -> EvaluationResult:
+        results: list[GateResult] = []
+        permitted: list[CandidateAction] = []
+        deferred: list[DeferredAction] = []
+
+        for action in candidates:
+            blocked = False
+            defer_until: datetime | None = None
+            defer_rule = ""
+            defer_why = ""
+
+            for rule in self.rules:
+                if action.action_type not in rule.applies_to:
+                    continue
+                violated, rationale = PREDICATES[rule.id](
+                    event, action, ctx, rule.params, diagnosis
+                )
+                verdict = (
+                    rule.verdict if violated else GateVerdict.PASS
+                )
+                results.append(
+                    GateResult(
+                        rule_id=rule.id,
+                        verdict=verdict,
+                        rationale=rationale,
+                        source=rule.source,
+                        applies_to=action.action_type,
+                    )
+                )
+                if not violated:
+                    continue
+                if rule.verdict is GateVerdict.BLOCK:
+                    blocked = True
+                    break  # a blocked action needs no further evaluation
+                if rule.verdict is GateVerdict.DEFER:
+                    when = self._defer_until(event, ctx, rule)
+                    if defer_until is None or when > defer_until:
+                        defer_until, defer_rule, defer_why = when, rule.id, rationale
+
+            if blocked:
+                continue
+            if defer_until is not None:
+                deferred.append(
+                    DeferredAction(
+                        action=action,
+                        defer_until=defer_until,
+                        rule_id=defer_rule,
+                        rationale=defer_why,
+                    )
+                )
+                continue
+            permitted.append(action)
+
+        return EvaluationResult(gate_results=results, permitted=permitted, deferred=deferred)
+
+    @staticmethod
+    def _defer_until(event: RiskEvent, ctx: GateContext, rule: RuleSpec) -> datetime:
+        if rule.id == "rbi.emandate_pre_debit_notice":
+            sent = ctx.notices_sent.get(event.event_id)
+            hours = rule.params["notice_hours"]
+            # If no notice has gone out, the clock starts when we send one now.
+            return (sent or ctx.now) + timedelta(hours=hours)
+        return ctx.now + timedelta(hours=1)
+
+    # -- re-validation -----------------------------------------------------
+
