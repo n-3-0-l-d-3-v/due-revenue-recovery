@@ -108,3 +108,29 @@ rules:
        request_vpa_repair, winback_sequence]
     params: {}
 
+  # -------------------------------------------------------------------------
+  # Customer protection
+  # -------------------------------------------------------------------------
+  - id: contact.weekly_cap
+    title: "At most 2 outbound contacts per customer per week"
+    source: "Recoup policy — contact fatigue converts involuntary churn into voluntary churn"
+    verdict: block
+    applies_to:
+      [nudge_payment_link, request_instrument_switch, request_vpa_repair, winback_sequence]
+    params:
+      max_contacts: 2
+      window_days: 7
+
+  - id: obligation.still_valid
+    title: "Never recover money against a cancelled or unfulfillable obligation"
+    source: "Recoup policy"
+    note: >
+      Recovering money you should not have charged is negative value: it becomes
+      a refund plus a dispute. This gate is why 'money recovered' is a safe
+      headline metric for us and not for a blind retrier.
+    verdict: block
+    applies_to:
+      [retry_now, retry_scheduled, nudge_payment_link, capture_authorized,
+       request_instrument_switch, request_vpa_repair, winback_sequence]
+    params: {}
+
