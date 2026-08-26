@@ -311,3 +311,20 @@ LTV_MULTIPLE_ONE_TIME: float = 2.8
 LTV_MULTIPLE_RECURRING: float = 11.0
 
 
+# ---------------------------------------------------------------------------
+# Costs — the denominator of the net-value objective
+# ---------------------------------------------------------------------------
+
+# [ASSUMED] Indian market rates. These matter: they set the floor below which
+# recovery destroys value, and the value threshold gate reads them.
+COST_PER_RETRY_ATTEMPT: Decimal = Decimal("1.80")
+COST_PER_SMS: Decimal = Decimal("0.28")
+COST_PER_EMAIL: Decimal = Decimal("0.04")
+COST_PER_SUPPORT_TICKET: Decimal = Decimal("42.00")
+
+# [ASSUMED] Probability a recovery attempt generates a support ticket. Rises
+# sharply for the "Transaction Failed, Money Debited" late-auth pattern.
+P_SUPPORT_TICKET_NORMAL: float = 0.012
+P_SUPPORT_TICKET_LATE_AUTH: float = 0.19
+
+
