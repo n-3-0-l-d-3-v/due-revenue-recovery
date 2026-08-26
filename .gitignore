@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.db
+*.sqlite3
+ledger/*.jsonl
+out/
+.pytest_cache/
+node_modules/
+dist/
+.DS_Store
+.hypothesis/
