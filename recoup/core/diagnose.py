@@ -357,3 +357,62 @@ What is the most likely underlying cause?"""
             )
         return cause, float(out.confidence), out.reasoning
 
+
+# ---------------------------------------------------------------------------
+# Diagnoser
+# ---------------------------------------------------------------------------
+
+
+class Diagnoser:
+    def __init__(self, inferencer: Inferencer | None = None) -> None:
+        self.inferencer = inferencer or HeuristicInferencer()
+
+    def diagnose(self, event: RiskEvent, ctx: BatchContext) -> Diagnosis:
+        # Non-failure leak points carry no error code — their cause is the event
+        # type itself. An authorised-but-uncaptured payment did not fail.
+        if event.event_type in (EventType.UNCAPTURED_AUTH, EventType.LATE_AUTHORIZATION):
+            return Diagnosis(
+                root_cause=RootCause.UNCAPTURED,
+                decline_class=DeclineClass.UNKNOWN,
+                confidence=1.0,
+                evidence_ref="rzp:payments/capture-settings",
+                reasoned_by="table",
+            )
+        if event.event_type is EventType.ABANDONED_CHECKOUT:
+            return Diagnosis(
+                root_cause=RootCause.CUSTOMER_ABANDONED,
+                decline_class=DeclineClass.BUSINESS,
+                confidence=1.0,
+                evidence_ref="recoup:abandoned_checkout",
+                reasoned_by="table",
+            )
+
+        reason = event.error_reason
+        if reason and reason in DIAGNOSIS_TABLE:
+            cause, cls, ref = DIAGNOSIS_TABLE[reason]
+            return Diagnosis(
+                root_cause=cause,
+                decline_class=cls,
+                confidence=1.0,
+                evidence_ref=ref,
+                reasoned_by="table",
+            )
+
+        if reason in AMBIGUOUS_REASONS:
+            cause, confidence, why = self.inferencer.infer(event, ctx)
+            return Diagnosis(
+                root_cause=cause,
+                decline_class=DeclineClass.UNKNOWN,
+                confidence=confidence,
+                evidence_ref=f"inferred:{self.inferencer.name}:{why}",
+                reasoned_by=self.inferencer.name,
+            )
+
+        return Diagnosis(
+            root_cause=RootCause.AMBIGUOUS_DECLINE,
+            decline_class=DeclineClass.UNKNOWN,
+            confidence=0.0,
+            evidence_ref=f"unmapped reason code '{reason}' — escalate to a human",
+            reasoned_by="table",
+        )
+
