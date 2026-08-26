@@ -60,3 +60,30 @@ rules:
     applies_to: [retry_now, retry_scheduled]
     params: {}
 
+  # -------------------------------------------------------------------------
+  # RBI e-mandate framework
+  # -------------------------------------------------------------------------
+  - id: rbi.emandate_pre_debit_notice
+    title: "Auto-debit requires 24h pre-debit notification to the customer"
+    source: "RBI e-mandate framework — pre-transaction notification"
+    note: >
+      Verdict is DEFER, not BLOCK. The action is legitimate; it is merely not
+      legitimate YET. Deferral schedules the notice and re-queues the debit,
+      which is why execution-time re-validation exists.
+    verdict: defer
+    applies_to: [retry_now, retry_scheduled]
+    params:
+      notice_hours: 24
+      instruments: [emandate, upi_autopay]
+
+  - id: rbi.afa_threshold
+    title: "E-mandate debits above the AFA threshold cannot be silent"
+    source: "RBI: AFA required above Rs 15,000; Rs 1,00,000 for insurance, mutual funds, credit card bills"
+    verdict: block
+    applies_to: [retry_now, retry_scheduled]
+    params:
+      threshold: 15000
+      exempt_category_threshold: 100000
+      exempt_categories: [insurance, mutual_fund, credit_card_bill]
+      instruments: [emandate, upi_autopay]
+
