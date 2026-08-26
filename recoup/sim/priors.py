@@ -328,3 +328,40 @@ P_SUPPORT_TICKET_NORMAL: float = 0.012
 P_SUPPORT_TICKET_LATE_AUTH: float = 0.19
 
 
+# ---------------------------------------------------------------------------
+# Event type mix
+# ---------------------------------------------------------------------------
+
+# [ASSUMED] Share of at-risk events by leak point for a merchant running both
+# one-time checkout and subscriptions. Uncaptured/late-auth are deliberately
+# non-trivial here because they are the leaks competing submissions ignore.
+EVENT_TYPE_MIX: dict[str, float] = {
+    "failed_payment": 0.52,
+    "failed_mandate": 0.21,
+    "abandoned_checkout": 0.12,
+    "uncaptured_auth": 0.07,
+    "late_authorization": 0.05,
+    "halted_subscription": 0.03,
+}
+
+
+def sweepable() -> dict[str, object]:
+    """Every ASSUMED parameter the sensitivity harness must vary.
+
+    Kept as an explicit registry rather than introspection so that adding an
+    assumption without registering it is a visible omission in review.
+    """
+    return {
+        "BASE_RECOVERY_PROB": BASE_RECOVERY_PROB,
+        "ACTION_FIT": ACTION_FIT,
+        "TERMINAL_SWITCH_RECOVERY_PROB": TERMINAL_SWITCH_RECOVERY_PROB,
+        "SALARY_WINDOW_MULTIPLIER": SALARY_WINDOW_MULTIPLIER,
+        "LATE_MONTH_MULTIPLIER": LATE_MONTH_MULTIPLIER,
+        "ISSUER_DOWN_RETRY_MULTIPLIER": ISSUER_DOWN_RETRY_MULTIPLIER,
+        "FATIGUE_DECAY_PER_CONTACT": FATIGUE_DECAY_PER_CONTACT,
+        "CHURN_HAZARD_PER_CONTACT": CHURN_HAZARD_PER_CONTACT,
+        "ISSUER_OUTAGE_DAY_PROB": ISSUER_OUTAGE_DAY_PROB,
+        "COST_PER_RETRY_ATTEMPT": COST_PER_RETRY_ATTEMPT,
+        "P_SUPPORT_TICKET_LATE_AUTH": P_SUPPORT_TICKET_LATE_AUTH,
+        "EVENT_TYPE_MIX": EVENT_TYPE_MIX,
+    }
