@@ -172,3 +172,73 @@ TECHNICAL_REASON_WEIGHTS: dict[Instrument, dict[str, float]] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Recovery probabilities — the latent truth the oracle samples from
+# ---------------------------------------------------------------------------
+
+# Base probability that a well-timed, gate-permitted retry recovers the payment,
+# conditioned on root cause.
+#
+# [DERIVED] Anchored to two published figures and shaped by the technical/business
+# logic in docs/domain-primer.md Part 3:
+#   - Razorpay's Intelligent Retry Engine reports +8% debit collections over baseline
+#     https://razorpay.com/blog/upi-autopay-with-intelligent-revenue-protect/
+#   - Smart retry alone recovers ~40% of failed subscription payments; layered
+#     recovery reaches ~70%.  https://recurly.com/blog/failed-payment-recovery-data-based-strategy/
+# The ORDERING here is well supported (technical >> transient business >> terminal).
+# The exact values are [ASSUMED] and swept by the sensitivity harness.
+BASE_RECOVERY_PROB: dict[RootCause, float] = {
+    # Technical: the customer was willing and able. Retry works well.
+    RootCause.ISSUER_DOWN: 0.78,
+    RootCause.GATEWAY_DOWN: 0.82,
+    RootCause.TIMEOUT: 0.71,
+    # Transient business: depends heavily on WHEN.
+    RootCause.INSUFFICIENT_FUNDS: 0.34,
+    RootCause.LIMIT_EXCEEDED: 0.46,
+    # Needs the customer to act. Retry alone is near-useless; a nudge is the lever.
+    RootCause.CUSTOMER_ABANDONED: 0.11,
+    RootCause.AUTH_FAILED: 0.14,
+    # Terminal for same-instrument retry. Non-zero only via instrument switch.
+    RootCause.INSTRUMENT_EXPIRED: 0.0,
+    RootCause.INSTRUMENT_BLOCKED: 0.0,
+    RootCause.INSTRUMENT_NOT_ENABLED: 0.0,
+    RootCause.INVALID_VPA: 0.0,
+    RootCause.RISK_BLOCKED: 0.0,
+    # Uncaptured auth is not a recovery gamble — it is an operational miss.
+    RootCause.UNCAPTURED: 0.97,
+    RootCause.AMBIGUOUS_DECLINE: 0.22,
+}
+
+# Multiplier on recovery probability when the action matches the root cause.
+# [ASSUMED] — encodes "the right treatment for the right diagnosis". Swept.
+ACTION_FIT: dict[tuple[RootCause, ActionType], float] = {
+    (RootCause.CUSTOMER_ABANDONED, ActionType.NUDGE_PAYMENT_LINK): 4.2,
+    (RootCause.AUTH_FAILED, ActionType.NUDGE_PAYMENT_LINK): 3.8,
+    (RootCause.INSTRUMENT_EXPIRED, ActionType.REQUEST_INSTRUMENT_SWITCH): 1.0,
+    (RootCause.INSTRUMENT_BLOCKED, ActionType.REQUEST_INSTRUMENT_SWITCH): 1.0,
+    (RootCause.INSTRUMENT_NOT_ENABLED, ActionType.REQUEST_INSTRUMENT_SWITCH): 1.0,
+    (RootCause.INVALID_VPA, ActionType.REQUEST_VPA_REPAIR): 1.0,
+    (RootCause.UNCAPTURED, ActionType.CAPTURE_AUTHORIZED): 1.0,
+}
+
+# Absolute recovery probability for switch/repair actions on terminal causes.
+# [ASSUMED] Customer must act, so this is a response-rate, not an approval-rate.
+TERMINAL_SWITCH_RECOVERY_PROB: float = 0.27
+
+# Terminal for a same-instrument retry, but still recoverable if the customer
+# switches instrument or repairs their VPA. Distinguishing these from truly
+# unrecoverable events matters: counting them as lost understates what a
+# well-designed system can reach, and counting them as retryable generates fines.
+TERMINAL_FOR_RETRY_SWITCHABLE: frozenset[RootCause] = frozenset(
+    {
+        RootCause.INSTRUMENT_EXPIRED,
+        RootCause.INSTRUMENT_BLOCKED,
+        RootCause.INSTRUMENT_NOT_ENABLED,
+        RootCause.INVALID_VPA,
+    }
+)
+# RISK_BLOCKED is deliberately excluded: the bank flagged fraud. Chasing it with a
+# different instrument is exactly the card-testing pattern that gets a merchant
+# classified as the attacker.
+
+
