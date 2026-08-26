@@ -43,3 +43,21 @@ RECURRING_INSTRUMENT_MIX: dict[Instrument, float] = {
 }
 
 
+# ---------------------------------------------------------------------------
+# Decline class split
+# ---------------------------------------------------------------------------
+
+# [CITED] NPCI: 81.7% of failed transactions are business declines (user-side:
+# invalid PIN, insufficient balance, limits), 18.26% technical declines
+# (system/network unavailability at bank or NPCI).
+# https://www.business-standard.com/amp/article/economy-policy/insufficient-balance-wrong-pin-top-reasons-for-failed-digital-transactions-121122700487_1.html
+#
+# This is the single most important prior in the file. It is why blind-retry
+# strategies underperform: they spend attempts on the 81.7% that will decline
+# identically, and are only ever right about the 18.3%.
+DECLINE_CLASS_SPLIT: dict[DeclineClass, float] = {
+    DeclineClass.BUSINESS: 0.817,
+    DeclineClass.TECHNICAL: 0.183,
+}
+
+
