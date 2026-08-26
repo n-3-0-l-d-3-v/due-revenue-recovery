@@ -89,7 +89,10 @@ class RecoveryPipeline:
         result = BatchResult(ledger=self.ledger)
 
         for event in events:
-            decided_at = now
+            # Decide shortly after the failure, not at one fixed instant for a
+            # batch spanning a month. A single batch clock made every event older
+            # than that instant look like an expired authorisation.
+            decided_at = max(now, event.occurred_at + timedelta(hours=1))
             gate_ctx = GateContext(now=decided_at, counters=self.counters)
 
             diagnosis = self.diagnoser.diagnose(event, ctx)
