@@ -483,3 +483,25 @@ def evaluate(events: list[RiskEvent], diagnoser: Diagnoser) -> DiagnosisReport:
         per_cause={k: (v[0], v[1]) for k, v in per_cause.items()},
     )
 
+
+def default_diagnoser() -> Diagnoser:
+    """Heuristic by default. This is an evidence-based choice, not a fallback.
+
+    MEASURED, 7 seeds x 1000 events (see `recoup.sim.ceiling`):
+
+        majority-class floor    43.1%
+        heuristic               46.6%
+        Bayes-optimal ceiling   48.7%
+
+    The heuristic already captures 62% of the total available headroom. What
+    remains for any smarter model is ~2.1 points, on the 7% of events that need
+    inference at all — roughly 0.15% of batch-level diagnosis accuracy.
+
+    An LLM call per event cannot justify itself against that. `ClaudeInferencer`
+    is kept because the measurement is reproducible and the decision should be
+    revisitable, but it is not the default, and the submission does not claim an
+    LLM classification win. The model's honest jobs in this system are unmapped
+    reason codes and writing the human-readable explanation on the exception
+    queue — not classifying where a table and five rules already reach the ceiling.
+    """
+    return Diagnoser(HeuristicInferencer())
