@@ -1,0 +1,51 @@
+# Policy gates — hard constraints only.
+#
+# WHAT BELONGS HERE: things that must never happen. Network rules, regulation,
+# consent, and arithmetic impossibility.
+#
+# WHAT DOES NOT BELONG HERE: "not worth it". Value judgements live in the scorer
+# and the allocator, because they need an expected value the gate deliberately
+# does not have. Gates answer "may we?"; scoring answers "should we?".
+# Keeping that line clean is what lets the gate run before the learner.
+#
+# This file holds parameters, verdicts, and citations. The predicate logic lives
+# in engine.py, keyed by rule id — no expression interpreter, so every rule is
+# directly unit-testable and nothing here is eval'd.
+
+version: 1
+
+rules:
+  # -------------------------------------------------------------------------
+  # Card network rules. Breaching these produces real money penalties.
+  # -------------------------------------------------------------------------
+  - id: network.attempts_per_card_30d
+    title: "No more than 15 authorisation attempts per instrument per 30 days"
+    source: "Visa / Mastercard network rules; penalties from $5,000/month"
+    verdict: block
+    applies_to: [retry_now, retry_scheduled]
+    params:
+      max_attempts: 15
+      window_days: 30
+
+  - id: network.attempts_per_card_24h
+    title: "No more than 9 authorisation attempts per instrument per 24 hours"
+    source: "Visa / Mastercard reattempt limits"
+    verdict: block
+    applies_to: [retry_now, retry_scheduled]
+    params:
+      max_attempts: 9
+      window_hours: 24
+
+  - id: network.merchant_retry_cap
+    title: "No more than 3 merchant-initiated retries per payment"
+    source: "Recoup policy — deliberately tighter than the network ceiling"
+    note: >
+      This is the invariant the property-based tests prove. It is set well below
+      the network limit on purpose: the network cap is where fines begin, not
+      where good behaviour ends. Staying far from a cliff is cheaper than
+      measuring your distance from it.
+    verdict: block
+    applies_to: [retry_now, retry_scheduled]
+    params:
+      max_retries: 3
+
