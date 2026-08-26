@@ -198,6 +198,36 @@ AMBIGUOUS_REASONS: frozenset[str] = frozenset(
     {"card_declined", "payment_failed", "payment_declined"}
 )
 
+# Context multipliers applied to the base weights above.
+#
+# Without these the hidden cause would be independent of everything observable,
+# which would make the inference task unlearnable by construction and cap any
+# diagnoser at the 42% majority-class rate. Real declines are not like that: a
+# generic decline during a known outage really is more likely to be the outage,
+# and a generic decline on an unusually large ticket really is more likely to be
+# a ceiling.
+#
+# [ASSUMED] magnitudes, [DERIVED] directions — each follows from the mechanism in
+# docs/domain-primer.md Part 3. Swept by the sensitivity harness, because a
+# diagnoser that only works at one setting of these is not a diagnoser.
+AMBIGUOUS_CONTEXT_MULTIPLIERS: dict[str, dict[RootCause, float]] = {
+    # An outage is in progress on this issuer right now.
+    "issuer_outage_active": {RootCause.ISSUER_DOWN: 9.0},
+    # Large ticket for this merchant — ceilings bind before balances empty.
+    "amount_high": {RootCause.LIMIT_EXCEEDED: 3.2, RootCause.RISK_BLOCKED: 2.4},
+    # Repeated failures without success look like a standing block.
+    "many_prior_attempts": {RootCause.INSTRUMENT_BLOCKED: 4.5},
+    # Late-month / pre-salary balance trough.
+    "late_month": {RootCause.INSUFFICIENT_FUNDS: 1.9},
+    # Odd-hour activity trips fraud rules more often.
+    "odd_hour": {RootCause.RISK_BLOCKED: 2.2},
+}
+
+# Threshold above which a ticket counts as "high" for the multipliers above.
+# Roughly the 90th percentile of the amount distribution.
+AMBIGUOUS_HIGH_AMOUNT: Decimal = Decimal("2400")
+AMBIGUOUS_MANY_ATTEMPTS: int = 3
+
 # ---------------------------------------------------------------------------
 # Recovery probabilities — the latent truth the oracle samples from
 # ---------------------------------------------------------------------------

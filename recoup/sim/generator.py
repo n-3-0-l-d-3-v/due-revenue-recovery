@@ -191,6 +191,44 @@ def _build_customers(rng: random.Random, n: int) -> dict[str, Customer]:
     return customers
 
 
+def _hidden_cause(
+    rng: random.Random,
+    *,
+    outage_active: bool,
+    amount: Decimal,
+    prior_attempts: int,
+    occurred_at: datetime,
+) -> RootCause:
+    """Sample the real cause behind a generic decline, conditioned on context.
+
+    The conditioning is the point. If the hidden cause were drawn from the base
+    rates alone it would be independent of everything a diagnoser can observe,
+    the task would be unlearnable, and no diagnoser could beat the majority class.
+    Real generic declines do carry signal — an outage in progress genuinely raises
+    the odds that a bare "declined" is that outage — and the simulator has to
+    reproduce that or the accuracy number measures nothing.
+    """
+    weights = dict(priors.AMBIGUOUS_HIDDEN_CAUSE)
+
+    active: list[str] = []
+    if outage_active:
+        active.append("issuer_outage_active")
+    if amount >= priors.AMBIGUOUS_HIGH_AMOUNT:
+        active.append("amount_high")
+    if prior_attempts >= priors.AMBIGUOUS_MANY_ATTEMPTS:
+        active.append("many_prior_attempts")
+    if occurred_at.day >= 25 or occurred_at.day <= 5:
+        active.append("late_month")
+    if occurred_at.hour < 6:
+        active.append("odd_hour")
+
+    for signal in active:
+        for cause, mult in priors.AMBIGUOUS_CONTEXT_MULTIPLIERS[signal].items():
+            weights[cause] = weights.get(cause, 0.0) * mult
+
+    return _weighted(rng, weights)  # type: ignore[return-value]
+
+
 def _pick_reason(
     rng: random.Random, instrument: Instrument, decline_class: DeclineClass
 ) -> str:
@@ -291,10 +329,14 @@ def generate_batch(
             )
 
         # --- latent truth -------------------------------------------------
-        # An ambiguous decline carries a hidden real cause: the issuer refused
-        # without saying why, so the system must infer what actually happened.
         if root_cause is RootCause.AMBIGUOUS_DECLINE:
-            root_cause = _weighted(rng, priors.AMBIGUOUS_HIDDEN_CAUSE)  # type: ignore[assignment]
+            root_cause = _hidden_cause(
+                rng,
+                outage_active=world.outage_at(customer.issuer, occurred_at) is not None,
+                amount=amount,
+                prior_attempts=prior_30d_seed,
+                occurred_at=occurred_at,
+            )
 
 
         funds_day: int | None = None
