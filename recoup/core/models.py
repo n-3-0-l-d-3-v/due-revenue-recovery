@@ -218,3 +218,47 @@ class CandidateAction(BaseModel):
     rationale: str = ""
 
 
+# --------------------------------------------------------------------------
+# Gate + scoring
+# --------------------------------------------------------------------------
+
+
+class GateResult(BaseModel):
+    """One rule's evaluation against one candidate action.
+
+    Passes are recorded as well as blocks. A gate that only logs its refusals
+    cannot prove compliance — it can only prove it noticed some violations.
+    """
+
+    rule_id: str
+    verdict: GateVerdict
+    rationale: str
+    source: str = Field(description="e.g. 'Visa/MC network rules', 'RBI e-mandate'")
+    applies_to: ActionType | None = None
+
+
+class EVComponents(BaseModel):
+    """Every term in the net-value objective, kept separable for the audit trail."""
+
+    p_recovery: float
+    amount: Decimal
+    attempt_cost: Decimal
+    contact_cost: Decimal
+    expected_support_cost: Decimal
+    churn_risk: float
+    customer_ltv: Decimal
+    issuer_trust_penalty: Decimal
+
+    @property
+    def net_value(self) -> Decimal:
+        gross = Decimal(str(self.p_recovery)) * self.amount
+        costs = (
+            self.attempt_cost
+            + self.contact_cost
+            + self.expected_support_cost
+            + (Decimal(str(self.churn_risk)) * self.customer_ltv)
+            + self.issuer_trust_penalty
+        )
+        return gross - costs
+
+
