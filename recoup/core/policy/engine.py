@@ -126,3 +126,118 @@ def predicate(rule_id: str) -> Callable[[Predicate], Predicate]:
         return fn
     return wrap
 
+
+# ---------------------------------------------------------------------------
+# Predicates
+# ---------------------------------------------------------------------------
+
+
+@predicate("network.attempts_per_card_30d")
+def _attempts_30d(event, action, ctx, params, diagnosis):
+    used = ctx.counters.total_attempts_30d(
+        event.instrument_token, ctx.now, event.prior_attempts_30d
+    )
+    cap = params["max_attempts"]
+    return used >= cap, f"{used}/{cap} attempts on this instrument in 30d"
+
+
+@predicate("network.attempts_per_card_24h")
+def _attempts_24h(event, action, ctx, params, diagnosis):
+    used = ctx.counters.total_attempts_24h(
+        event.instrument_token, ctx.now, event.prior_attempts_24h
+    )
+    cap = params["max_attempts"]
+    return used >= cap, f"{used}/{cap} attempts on this instrument in 24h"
+
+
+@predicate("network.merchant_retry_cap")
+def _merchant_cap(event, action, ctx, params, diagnosis):
+    used = ctx.counters.merchant_retries(event.payment_id)
+    cap = params["max_retries"]
+    return used >= cap, f"{used}/{cap} merchant-initiated retries on this payment"
+
+
+@predicate("network.do_not_retry_terminal")
+def _terminal(event, action, ctx, params, diagnosis):
+    cause = diagnosis.root_cause if diagnosis else event.truth_root_cause
+    if cause is None:
+        return False, "no diagnosis available; not treated as terminal"
+    if cause in TERMINAL_FOR_RETRY:
+        return True, f"{cause.value} is terminal for same-instrument retry"
+    return False, f"{cause.value} is not terminal"
+
+
+@predicate("rbi.emandate_pre_debit_notice")
+def _pre_debit(event, action, ctx, params, diagnosis):
+    if event.instrument.value not in params["instruments"]:
+        return False, "not a mandate instrument"
+    sent = ctx.notices_sent.get(event.event_id)
+    required = timedelta(hours=params["notice_hours"])
+    if sent is None:
+        return True, f"pre-debit notice not yet sent; {params['notice_hours']}h required"
+    elapsed = ctx.now - sent
+    if elapsed < required:
+        remaining = required - elapsed
+        return True, f"notice sent {elapsed} ago; {remaining} of the 24h window remains"
+    return False, f"notice sent {elapsed} ago, window satisfied"
+
+
+@predicate("rbi.afa_threshold")
+def _afa(event, action, ctx, params, diagnosis):
+    if event.instrument.value not in params["instruments"]:
+        return False, "not a mandate instrument"
+    threshold = Decimal(str(params["threshold"]))
+    if ctx.merchant_category in params.get("exempt_categories", []):
+        threshold = Decimal(str(params["exempt_category_threshold"]))
+    if event.amount > threshold:
+        return True, (
+            f"Rs {event.amount} exceeds AFA threshold Rs {threshold} "
+            f"for category '{ctx.merchant_category}'; cannot debit silently"
+        )
+    return False, f"Rs {event.amount} within AFA threshold Rs {threshold}"
+
+
+@predicate("consent.active")
+def _consent(event, action, ctx, params, diagnosis):
+    return (not event.consent_active), (
+        "consent withdrawn" if not event.consent_active else "consent active"
+    )
+
+
+@predicate("contact.weekly_cap")
+def _contact_cap(event, action, ctx, params, diagnosis):
+    used = ctx.counters.total_contacts_week(
+        event.customer_id, ctx.now, event.contacts_this_week
+    )
+    cap = params["max_contacts"]
+    return used >= cap, f"{used}/{cap} contacts to this customer this week"
+
+
+@predicate("obligation.still_valid")
+def _obligation(event, action, ctx, params, diagnosis):
+    return (not event.obligation_valid), (
+        "underlying obligation cancelled or unfulfillable"
+        if not event.obligation_valid
+        else "obligation valid"
+    )
+
+
+@predicate("value.below_cost_floor")
+def _cost_floor(event, action, ctx, params, diagnosis):
+    floor = Decimal(str(params["min_amount"]))
+    return event.amount < floor, f"Rs {event.amount} vs floor Rs {floor}"
+
+
+@predicate("auth.capture_window")
+def _capture_window(event, action, ctx, params, diagnosis):
+    if event.auth_expires_at is None:
+        return True, "no authorisation on this event to capture"
+    margin = timedelta(hours=params["safety_margin_hours"])
+    deadline = event.auth_expires_at - margin
+    if ctx.now >= deadline:
+        return True, (
+            f"authorisation expires {event.auth_expires_at:%Y-%m-%d %H:%M}; "
+            f"inside the {params['safety_margin_hours']}h safety margin"
+        )
+    return False, f"authorisation valid until {event.auth_expires_at:%Y-%m-%d %H:%M}"
+
