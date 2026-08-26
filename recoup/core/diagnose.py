@@ -416,3 +416,70 @@ class Diagnoser:
             reasoned_by="table",
         )
 
+
+# ---------------------------------------------------------------------------
+# Measurement
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class DiagnosisReport:
+    total: int
+    table_resolved: int
+    inferred: int
+    inferred_correct: int
+    per_cause: dict[str, tuple[int, int]]  # cause -> (correct, total)
+
+    @property
+    def inference_accuracy(self) -> float:
+        return self.inferred_correct / self.inferred if self.inferred else 0.0
+
+    def __str__(self) -> str:
+        lines = [
+            f"events                 : {self.total}",
+            f"resolved by table      : {self.table_resolved} "
+            f"({self.table_resolved / self.total:.1%}) — lookup, not prediction",
+            f"required inference     : {self.inferred} ({self.inferred / self.total:.1%})",
+            f"inference accuracy     : {self.inference_accuracy:.1%} "
+            f"({self.inferred_correct}/{self.inferred})",
+            "",
+            "per hidden cause (correct/total):",
+        ]
+        for cause, (ok, tot) in sorted(self.per_cause.items(), key=lambda kv: -kv[1][1]):
+            lines.append(f"  {cause:22s} {ok:3d}/{tot:3d}  {ok / tot:6.1%}")
+        return "\n".join(lines)
+
+
+def evaluate(events: list[RiskEvent], diagnoser: Diagnoser) -> DiagnosisReport:
+    """Measure diagnosis quality, reporting the inference subset separately.
+
+    Accuracy over all events would be a vanity number dominated by table lookups.
+    """
+    ctx = BatchContext.from_events(events)
+    table_resolved = inferred = correct = 0
+    per_cause: dict[str, list[int]] = {}
+
+    for event in events:
+        d = diagnoser.diagnose(event, ctx)
+        is_inference = event.error_reason in AMBIGUOUS_REASONS
+        if not is_inference:
+            table_resolved += 1
+            continue
+
+        inferred += 1
+        truth = event.truth_root_cause
+        hit = int(d.root_cause == truth)
+        correct += hit
+        key = truth.value if truth else "unknown"
+        bucket = per_cause.setdefault(key, [0, 0])
+        bucket[0] += hit
+        bucket[1] += 1
+
+    return DiagnosisReport(
+        total=len(events),
+        table_resolved=table_resolved,
+        inferred=inferred,
+        inferred_correct=correct,
+        per_cause={k: (v[0], v[1]) for k, v in per_cause.items()},
+    )
+
