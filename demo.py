@@ -24,6 +24,7 @@ from recoup.core.diagnose import (
     evaluate as evaluate_diagnosis,
 )
 from recoup.core.exceptions import ExceptionQueue
+from recoup.core.models import GateVerdict
 from recoup.core.pipeline import RecoveryPipeline
 from recoup.core.policy.engine import PolicyEngine
 from recoup.harness.counterfactual import CostModel, Counterfactual, render
@@ -172,13 +173,16 @@ def main() -> int:
     print(f"  {len(ledger)} hash-chained entries")
     print(f"  {ledger.verify()}")
     print()
-    print("  Now rewriting one recorded BLOCK verdict into a PASS, to hide a violation:")
-    target = next(
-        (i for i, e in enumerate(ledger._entries) if getattr(e, "gate_results", None)), 0
+    print("  Now rewriting a recorded BLOCK verdict into a PASS, to hide a violation:")
+    target_idx, target_gate = next(
+        (i, g)
+        for i, e in enumerate(ledger._entries)
+        for g in (getattr(e, "gate_results", None) or [])
+        if g.verdict is GateVerdict.BLOCK
     )
-    ledger._entries[target].gate_results[0].verdict = "pass"
-    verdict = ledger.verify()
-    print(f"  {verdict}")
+    print(f"    entry {target_idx}: rule '{target_gate.rule_id}' BLOCK -> PASS")
+    target_gate.verdict = GateVerdict.PASS
+    print(f"  {ledger.verify()}")
     print()
     print("  Tamper-EVIDENT, not tamper-proof: someone with write access could")
     print("  recompute the chain from that point on. Preventing that needs an")
