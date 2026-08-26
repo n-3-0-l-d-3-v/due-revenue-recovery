@@ -202,7 +202,13 @@ class RecoveryPipeline:
             )
 
             entry = RevalidationEntry(
-                entry_id=f"rev_{uuid.uuid4().hex[:16]}",
+                # Deterministic, not uuid4(): a random id makes every replay
+                # produce a different chain and silently voids the
+                # replayable-audit-trail claim. Caught by test_batch_is_deterministic.
+                entry_id="rev_"
+                + uuid.uuid5(
+                    uuid.NAMESPACE_OID, f"{pending.decision_id}:{when.isoformat()}"
+                ).hex[:16],
                 decision_id=pending.decision_id,
                 event_id=pending.event_id,
                 at=when,
