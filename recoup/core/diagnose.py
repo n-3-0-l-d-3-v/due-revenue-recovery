@@ -255,3 +255,16 @@ class HeuristicInferencer:
         rationale = "; ".join(why) if why else "no distinguishing signal; prior only"
         return cause, confidence, rationale
 
+
+class MajorityClassInferencer:
+    """Always predicts the most common cause. The floor any diagnoser must clear.
+
+    Without this reported alongside, an accuracy figure is unreadable — a model
+    scoring 40% on a task whose majority class is 39% has contributed nothing.
+    """
+
+    name = "majority_class"
+
+    def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]:
+        return RootCause.INSUFFICIENT_FUNDS, 0.40, "majority-class baseline"
+
