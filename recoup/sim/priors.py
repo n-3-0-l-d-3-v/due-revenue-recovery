@@ -229,6 +229,41 @@ AMBIGUOUS_HIGH_AMOUNT: Decimal = Decimal("2400")
 AMBIGUOUS_MANY_ATTEMPTS: int = 3
 
 # ---------------------------------------------------------------------------
+# Instrument success history — likelihood terms
+# ---------------------------------------------------------------------------
+#
+# Without these, the hidden cause behind a generic decline was statistically
+# invisible: the Bayes-optimal ceiling sat AT OR BELOW the majority-class floor
+# on four of five seeds, meaning no diagnoser could beat "always guess
+# insufficient funds". That was an artefact of a thin feature set, not a fact
+# about payments — a real merchant observes their own per-instrument outcomes.
+#
+# Two likelihoods carry almost all the signal:
+#
+# P(no recent success on this instrument | cause) — a blocked instrument clears
+# nothing, so an empty success history is strong evidence of a standing block.
+P_NO_RECENT_SUCCESS: dict[RootCause, float] = {
+    RootCause.INSTRUMENT_BLOCKED: 0.85,
+    RootCause.INSUFFICIENT_FUNDS: 0.15,
+    RootCause.LIMIT_EXCEEDED: 0.12,
+    RootCause.RISK_BLOCKED: 0.18,
+    RootCause.ISSUER_DOWN: 0.14,
+}
+
+# P(a LARGER amount cleared recently | cause, given some success history).
+# A per-transaction ceiling means larger charges never cleared — that is what a
+# ceiling IS. An empty balance says nothing about past capacity, so roughly half
+# the time a bigger charge did clear before.
+P_LARGER_SUCCESS_EXISTS: dict[RootCause, float] = {
+    RootCause.LIMIT_EXCEEDED: 0.05,
+    RootCause.INSUFFICIENT_FUNDS: 0.55,
+    RootCause.RISK_BLOCKED: 0.50,
+    RootCause.ISSUER_DOWN: 0.50,
+    RootCause.INSTRUMENT_BLOCKED: 0.30,
+}
+
+
+# ---------------------------------------------------------------------------
 # Recovery probabilities — the latent truth the oracle samples from
 # ---------------------------------------------------------------------------
 
