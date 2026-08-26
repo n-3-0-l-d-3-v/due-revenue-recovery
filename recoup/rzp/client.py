@@ -15,8 +15,23 @@ Three safety properties, in order of importance:
    and email disabled at the call site, every time. Test mode does not guarantee
    a test recipient — an email address in a fixture can be a real person's.
 
-Idempotency is by deterministic `receipt` / `reference_id`, derived from the
-event and action, so a replayed decision reuses the same reference.
+**Idempotency is enforced client-side, because the API does not enforce it.**
+
+Verified against the live sandbox: creating two orders with an identical
+`receipt` succeeds twice and produces two distinct order ids. Razorpay does not
+treat `receipt` as a dedup key — it is a merchant-side label. Anyone assuming
+otherwise (as this module's first version did) has written a double-charge:
+a network timeout on the first call, a retry, and the customer is billed twice.
+
+So this client keeps its own reference -> response map and returns the cached
+result rather than re-calling. `receipt` is still set, because it is what makes
+a duplicate *identifiable* in the dashboard afterwards — but it is a forensic
+aid, not a guarantee.
+
+Known limitation, stated rather than hidden: the map is in-process. A restart
+loses it, and a second worker never had it. Production needs it in the same
+durable store as the ledger, keyed by (event_id, action), written *before* the
+outbound call and cleared only on a confirmed terminal response.
 """
 
 from __future__ import annotations
@@ -57,6 +72,9 @@ class RazorpayClient:
     calls: list[ApiCall] = field(default_factory=list)
     _client: Any = None
     key_id: str = ""
+    # reference -> prior response. The API will happily create duplicates, so
+    # this is the only thing standing between a retried call and a double charge.
+    _seen: dict[str, dict] = field(default_factory=dict)
 
     @classmethod
     def from_env(cls, dry_run: bool | None = None) -> RazorpayClient:
@@ -97,16 +115,25 @@ class RazorpayClient:
         payload = {
             "amount": int(amount * 100),
             "currency": "INR",
-            "receipt": reference,  # deterministic — the idempotency handle
+            # Forensic label, NOT a dedup key — verified: Razorpay accepts
+            # duplicate receipts and mints a new order each time. Idempotency is
+            # enforced by _replay() below.
+            "receipt": reference,
             "notes": notes or {},
         }
+        cached = self._replay("order.create", reference)
+        if cached is not None:
+            return cached
+
         if self.dry_run:
             self._record("order.create", reference, True, "DRY RUN — not sent")
-            return {"id": f"order_dryrun_{reference}", "status": "created", "dry_run": True}
+            return self._remember(
+                reference, {"id": f"order_dryrun_{reference}", "status": "created", "dry_run": True}
+            )
 
         result = self._client.order.create(payload)
         self._record("order.create", reference, True, result.get("id", ""))
-        return result
+        return self._remember(reference, result)
 
     def create_payment_link(
         self, amount: Decimal, reference: str, description: str
@@ -125,18 +152,25 @@ class RazorpayClient:
             "notify": {"sms": False, "email": False},
             "reminder_enable": False,
         }
+        cached = self._replay("payment_link.create", reference)
+        if cached is not None:
+            return cached
+
         if self.dry_run:
             self._record("payment_link.create", reference, True, "DRY RUN — not sent")
-            return {
-                "id": f"plink_dryrun_{reference}",
-                "short_url": f"https://rzp.io/i/dryrun-{reference}",
-                "status": "created",
-                "dry_run": True,
-            }
+            return self._remember(
+                reference,
+                {
+                    "id": f"plink_dryrun_{reference}",
+                    "short_url": f"https://rzp.io/i/dryrun-{reference}",
+                    "status": "created",
+                    "dry_run": True,
+                },
+            )
 
         result = self._client.payment_link.create(payload)
         self._record("payment_link.create", reference, True, result.get("short_url", ""))
-        return result
+        return self._remember(reference, result)
 
     def capture_payment(self, payment_id: str, amount: Decimal) -> dict:
         """Capture an authorised payment before its window closes."""
@@ -146,6 +180,20 @@ class RazorpayClient:
 
         result = self._client.payment.capture(payment_id, int(amount * 100), {"currency": "INR"})
         self._record("payment.capture", payment_id, True, result.get("status", ""))
+        return result
+
+    # -- idempotency -------------------------------------------------------
+
+    def _replay(self, method: str, reference: str) -> dict | None:
+        """Return the prior response for this reference, if we already made it."""
+        prior = self._seen.get(reference)
+        if prior is None:
+            return None
+        self._record(method, reference, True, f"IDEMPOTENT REPLAY -> {prior.get('id', '?')}")
+        return dict(prior, idempotent_replay=True)
+
+    def _remember(self, reference: str, result: dict) -> dict:
+        self._seen[reference] = result
         return result
 
     # -- bookkeeping -------------------------------------------------------
