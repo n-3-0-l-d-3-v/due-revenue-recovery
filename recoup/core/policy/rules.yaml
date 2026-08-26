@@ -87,3 +87,24 @@ rules:
       exempt_categories: [insurance, mutual_fund, credit_card_bill]
       instruments: [emandate, upi_autopay]
 
+  - id: consent.active
+    title: "Never debit or contact a customer who has withdrawn consent"
+    source: "RBI e-mandate — customer may opt out after pre-debit notification"
+    note: >
+      Consent is stateful and can change between decision and execution. This
+      rule is the primary reason re-validation is mandatory rather than optional.
+
+      DELIBERATE OMISSION: capture_authorized is absent from applies_to, and that
+      is not an oversight. Capture is not a new debit — the customer already
+      authenticated and authorised that exact amount, and the issuer already
+      approved it. Withdrawing mandate consent governs FUTURE debits and outbound
+      contact; it does not retroactively void an authorisation the customer
+      granted. Blocking capture here would strand money the customer intended to
+      pay, and would then auto-refund it days later, producing a confusing
+      debit-then-refund and a support ticket.
+    verdict: block
+    applies_to:
+      [retry_now, retry_scheduled, nudge_payment_link, request_instrument_switch,
+       request_vpa_repair, winback_sequence]
+    params: {}
+
