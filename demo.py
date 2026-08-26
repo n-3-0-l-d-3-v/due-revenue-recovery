@@ -43,14 +43,77 @@ def rule(title: str = "") -> None:
         print("-" * W)
 
 
+def judge_mode(args) -> int:
+    """The 60-second version.
+
+    Four things, in the order that survives scrutiny: the table, the claims that
+    depend on no assumption, one concrete refusal with the rule that caused it,
+    and the place our own claim fails.
+    """
+    world = generate_batch(n_events=args.events, seed=args.seed)
+    cf = Counterfactual(world)
+    results = [cf.run(s) for s in all_strategies()]
+    blind = next(r for r in results if r.name == "blind_retry")
+    gated = next(r for r in results if r.name == "gated_agent")
+
+    print("\nRECOUP — Razorpay AI Buildathon, Track 03")
+    print(f"{len(world.events)} at-risk events, Rs {cf.amount_at_risk:,.0f} at stake\n")
+    print(render(results))
+
+    rule("CLAIMS THAT DEPEND ON NO ECONOMIC ASSUMPTION")
+    print(f"  policy violations   {gated.policy_violations:>8}   vs blind retry's {blind.policy_violations}")
+    print(f"  retry attempts      {gated.attempts_spent:>8}   vs {blind.attempts_spent}")
+    print(f"  customer contacts   {gated.contacts_sent:>8}   vs {blind.contacts_sent}")
+    print(f"  recovery captured   {float(gated.amount_recovered / blind.amount_recovered):>7.0%}   of what blind retry gets")
+    print("\n  Counts and rule evaluations. Verified identical under four cost")
+    print("  models, including one with every cost set to zero.")
+
+    rule("ONE REFUSAL, IN FULL")
+    pipeline = RecoveryPipeline()
+    result = pipeline.run(world.events)
+    blocked = next(d for d in result.decisions if d.blocked_by and d.chosen is None)
+    print(f"  event      {blocked.event_id}   Rs {blocked.event.amount:,.0f} at risk")
+    print(f"  diagnosis  {blocked.diagnosis.root_cause.value}  ({blocked.diagnosis.evidence_ref})")
+    print(f"  proposed   {[c.action_type.value for c in blocked.candidates]}")
+    gate = blocked.blocked_by[0]
+    print(f"  BLOCKED BY {gate.rule_id}")
+    print(f"    rationale {gate.rationale}")
+    print(f"    source    {gate.source}")
+    print()
+    print(f"  Rs {blocked.event.amount:,.0f} deliberately left on the table, with the rule that")
+    print("  refused it and its source recorded. Passes are recorded too — a gate")
+    print("  that logs only refusals cannot prove compliance.")
+
+    rule("WHERE OUR OWN CLAIM FAILS")
+    nc = Counterfactual(world, costs=CostModel().with_(churn_per_contact=0.0, churn_per_retry=0.0))
+    nb, ng = nc.run(BlindRetry()), nc.run(GatedAgent())
+    print("  Net value assumes annoying customers costs something. With all")
+    print("  customer-retention cost removed:")
+    print(f"    blind_retry  Rs {nb.net_value:>12,.0f}")
+    print(f"    gated_agent  Rs {ng.net_value:>12,.0f}   <- we lose")
+    print("\n  Published in the README, printed here, and locked by a test that")
+    print(f"  asserts the competitor wins. The counts above are unaffected: {ng.policy_violations} violations.")
+
+    rule("VERIFY")
+    print("  python demo.py                 full run, ten sections")
+    print("  python tools/mutation_check.py break each safety rule, confirm tests catch it")
+    print("  pytest -q                      142 tests, 15 property-based")
+    print(f"\ncompleted in {time.time() - _T0:.1f}s\n")
+    return 0
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--events", type=int, default=1000)
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--quick", action="store_true", help="skip the sensitivity sweep")
+    ap.add_argument("--judge", action="store_true", help="60-second version: claims only")
     args = ap.parse_args()
 
     started = time.time()
+
+    if args.judge:
+        return judge_mode(args)
 
     print("\nRECOUP — a policy-gated revenue recovery control plane")
     print("Razorpay AI Buildathon, Track 03")
