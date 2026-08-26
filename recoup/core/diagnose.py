@@ -159,3 +159,99 @@ class BatchContext:
 class Inferencer(Protocol):
     def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]: ...
 
+
+# ---------------------------------------------------------------------------
+# Heuristic inferencer — the baseline
+# ---------------------------------------------------------------------------
+
+
+class HeuristicInferencer:
+    """Rule-based inference over observable context. No API key required.
+
+    This exists to be beaten. Reporting an LLM's accuracy without a baseline says
+    nothing about whether the LLM contributed anything.
+    """
+
+    name = "heuristic"
+
+    # Prior belief over causes before any signal is observed. These are a payments
+    # engineer's judgement, NOT the simulator's generative weights — copying those
+    # would make measured accuracy circular. Both reflect the same domain facts,
+    # which is why the directions agree; the magnitudes are chosen independently.
+    PRIOR: dict[RootCause, float] = {
+        RootCause.INSUFFICIENT_FUNDS: 0.40,
+        RootCause.LIMIT_EXCEEDED: 0.18,
+        RootCause.RISK_BLOCKED: 0.16,
+        RootCause.INSTRUMENT_BLOCKED: 0.13,
+        RootCause.ISSUER_DOWN: 0.13,
+    }
+
+    def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]:
+        scores = dict(self.PRIOR)
+        why: list[str] = []
+        day = event.occurred_at.day
+
+        # A failed early-exit chain was the previous shape of this function and it
+        # scored BELOW the majority class: any single weak signal hijacked the
+        # answer. Scoring every signal and taking the argmax lets weak evidence
+        # nudge the belief without overturning the prior on its own.
+
+        if ctx.outage_suspected(event.issuer, event.occurred_at):
+            share = ctx.technical_share(event.issuer, event.occurred_at) or 0.0
+            scores[RootCause.ISSUER_DOWN] *= 6.0
+            why.append(
+                f"{event.issuer} failures {share:.0%} technical today vs "
+                f"{ctx.batch_technical_share:.0%} batch-wide"
+            )
+
+        if event.prior_attempts_30d >= 3:
+            scores[RootCause.INSTRUMENT_BLOCKED] *= 3.5
+            why.append(f"{event.prior_attempts_30d} prior attempts without success")
+
+        # Instrument success history — the strongest available signal.
+        if event.recent_success_count == 0:
+            # Nothing has cleared on this instrument. A moving balance would have
+            # let something through; a standing block would not.
+            scores[RootCause.INSTRUMENT_BLOCKED] *= 5.0
+            why.append("no successful charge on this instrument recently")
+        else:
+            scores[RootCause.INSTRUMENT_BLOCKED] *= 0.3
+            top = event.max_recent_success_amount
+            if top is not None and top > event.amount:
+                # A larger charge already cleared, so a per-transaction ceiling
+                # cannot be what is biting at this amount.
+                scores[RootCause.LIMIT_EXCEEDED] *= 0.1
+                why.append(
+                    f"a larger charge (Rs {top:,.0f}) cleared recently — rules out a cap"
+                )
+            elif top is not None:
+                scores[RootCause.LIMIT_EXCEEDED] *= 2.2
+                why.append(
+                    f"nothing above Rs {top:,.0f} has cleared — consistent with a cap"
+                )
+
+        if float(event.amount) >= ctx.amount_p90:
+            scores[RootCause.LIMIT_EXCEEDED] *= 2.5
+            scores[RootCause.RISK_BLOCKED] *= 1.8
+            why.append(
+                f"Rs {event.amount} at/above the merchant's p90 (Rs {ctx.amount_p90:,.0f})"
+            )
+
+        if day >= 25 or day <= 5:
+            scores[RootCause.INSUFFICIENT_FUNDS] *= 1.7
+            why.append(f"day {day} is in the late-month / pre-salary trough")
+
+        if event.occurred_at.hour < 6:
+            scores[RootCause.RISK_BLOCKED] *= 2.0
+            why.append(f"{event.occurred_at.hour:02d}:00 is an odd hour for this customer")
+
+        if not event.customer_success_days and float(event.amount) >= ctx.amount_p90:
+            scores[RootCause.RISK_BLOCKED] *= 1.5
+            why.append("large ticket on a customer with no payment history")
+
+        total = sum(scores.values())
+        cause = max(scores, key=lambda k: scores[k])
+        confidence = scores[cause] / total if total else 0.0
+        rationale = "; ".join(why) if why else "no distinguishing signal; prior only"
+        return cause, confidence, rationale
+
