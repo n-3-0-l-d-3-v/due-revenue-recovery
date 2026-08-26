@@ -390,3 +390,95 @@ class PolicyEngine:
 
     # -- re-validation -----------------------------------------------------
 
+    def revalidate(
+        self,
+        event: RiskEvent,
+        pending: PendingAction,
+        ctx: GateContext,
+        diagnosis: Diagnosis | None = None,
+    ) -> RevalidationOutcome:
+        """Re-run the full gate immediately before execution.
+
+        Called for every action with a gap between decision and execution. The
+        ledger records this outcome alongside the original decision, so the trail
+        shows both what was decided and what was true when it fired.
+        """
+        result = self.evaluate(event, [pending.action], ctx, diagnosis)
+
+        changed: list[str] = []
+        if event.consent_active != pending.snapshot_consent:
+            changed.append(
+                f"consent {pending.snapshot_consent} -> {event.consent_active}"
+            )
+        now_24h = ctx.counters.total_attempts_24h(
+            event.instrument_token, ctx.now, event.prior_attempts_24h
+        )
+        if now_24h != pending.snapshot_attempts_24h:
+            changed.append(f"attempts_24h {pending.snapshot_attempts_24h} -> {now_24h}")
+        now_contacts = ctx.counters.total_contacts_week(
+            event.customer_id, ctx.now, event.contacts_this_week
+        )
+        if now_contacts != pending.snapshot_contacts_week:
+            changed.append(
+                f"contacts_week {pending.snapshot_contacts_week} -> {now_contacts}"
+            )
+
+        return RevalidationOutcome(
+            approved=bool(result.permitted),
+            at=ctx.now,
+            gate_results=result.gate_results,
+            changed_since_decision=changed,
+        )
+
+    # -- static checks -----------------------------------------------------
+
+    def check_invariants(self) -> list[str]:
+        """Static contradiction and reachability checks over the rule set.
+
+        Run in CI and at startup. A rule set that contradicts itself does not fail
+        loudly at runtime — it silently permits or silently blocks everything,
+        which is exactly the class of bug an audit trail cannot catch after the fact.
+        """
+        issues: list[str] = []
+        by_id = {r.id: r for r in self.rules}
+
+        merchant = by_id.get("network.merchant_retry_cap")
+        d24 = by_id.get("network.attempts_per_card_24h")
+        d30 = by_id.get("network.attempts_per_card_30d")
+
+        if merchant and d24:
+            if merchant.params["max_retries"] > d24.params["max_attempts"]:
+                issues.append(
+                    "network.merchant_retry_cap exceeds the 24h network cap — "
+                    "our own limit would never bind and the network cap would."
+                )
+        if d24 and d30:
+            if d24.params["max_attempts"] > d30.params["max_attempts"]:
+                issues.append(
+                    "24h cap exceeds 30d cap — the 24h rule is unreachable."
+                )
+
+        afa = by_id.get("rbi.afa_threshold")
+        if afa:
+            if afa.params["threshold"] > afa.params["exempt_category_threshold"]:
+                issues.append(
+                    "AFA base threshold exceeds the exempt-category threshold — "
+                    "exempt categories would be treated more strictly than general ones."
+                )
+
+        floor = by_id.get("value.below_cost_floor")
+        if floor and float(floor.params["min_amount"]) <= 0:
+            issues.append("value.below_cost_floor min_amount must be positive to ever bind.")
+
+        for rule in self.rules:
+            if not rule.applies_to:
+                issues.append(f"{rule.id} applies to no action type — it can never fire.")
+            if not rule.source:
+                issues.append(f"{rule.id} has no cited source.")
+
+        return issues
+
+    def invariant_max_merchant_retries(self) -> int:
+        """The number the property-based tests assert can never be exceeded."""
+        by_id = {r.id: r for r in self.rules}
+        return int(by_id["network.merchant_retry_cap"].params["max_retries"])
