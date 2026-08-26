@@ -24,8 +24,8 @@ from recoup.core.diagnose import (
     evaluate as evaluate_diagnosis,
 )
 from recoup.core.exceptions import ExceptionQueue
-from recoup.core.models import GateVerdict
 from recoup.core.pipeline import RecoveryPipeline
+from recoup.core.models import GateVerdict
 from recoup.core.policy.engine import PolicyEngine
 from recoup.harness.counterfactual import CostModel, Counterfactual, render
 from recoup.harness.strategies import BlindRetry, GatedAgent, all_strategies
@@ -71,14 +71,27 @@ def judge_mode(args) -> int:
     rule("ONE REFUSAL, IN FULL")
     pipeline = RecoveryPipeline()
     result = pipeline.run(world.events)
-    blocked = next(d for d in result.decisions if d.blocked_by and d.chosen is None)
+    # The most valuable refusal, not the first one. A Rs 173 block illustrates
+    # nothing; the interesting case is real money the system chose to leave alone.
+    blocked = max(
+        (d for d in result.decisions if d.blocked_by and d.chosen is None),
+        key=lambda d: d.event.amount,
+    )
     print(f"  event      {blocked.event_id}   Rs {blocked.event.amount:,.0f} at risk")
     print(f"  diagnosis  {blocked.diagnosis.root_cause.value}  ({blocked.diagnosis.evidence_ref})")
     print(f"  proposed   {[c.action_type.value for c in blocked.candidates]}")
-    gate = blocked.blocked_by[0]
-    print(f"  BLOCKED BY {gate.rule_id}")
-    print(f"    rationale {gate.rationale}")
-    print(f"    source    {gate.source}")
+    print()
+    # Grouped by action: the same rule legitimately appears once per candidate,
+    # and without the action shown that reads as a duplicated line rather than
+    # two separate evaluations.
+    for candidate in blocked.candidates:
+        gates = [g for g in blocked.gate_results if g.applies_to is candidate.action_type]
+        if not gates:
+            continue
+        print(f"  {candidate.action_type.value}:")
+        for gate in gates:
+            mark = {"pass": "  ok  ", "block": " BLOCK", "defer": " DEFER"}[gate.verdict.value]
+            print(f"   {mark} {gate.rule_id:32s} {gate.rationale[:32]}")
     print()
     print(f"  Rs {blocked.event.amount:,.0f} deliberately left on the table, with the rule that")
     print("  refused it and its source recorded. Passes are recorded too — a gate")
