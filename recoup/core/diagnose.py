@@ -268,3 +268,92 @@ class MajorityClassInferencer:
     def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]:
         return RootCause.INSUFFICIENT_FUNDS, 0.40, "majority-class baseline"
 
+
+# ---------------------------------------------------------------------------
+# Claude inferencer
+# ---------------------------------------------------------------------------
+
+_SYSTEM = """You are a payments failure analyst for an Indian merchant using Razorpay.
+
+An issuer declined a payment and returned an ambiguous code (card_declined, \
+payment_failed, or payment_declined). These codes carry no reason — the issuer \
+refused without transmitting why. Infer the most likely underlying cause from context.
+
+Candidate causes:
+- insufficient_funds  : balance too low at the moment of the attempt
+- limit_exceeded      : per-transaction or daily ceiling hit
+- risk_blocked        : issuer's fraud system flagged the transaction
+- instrument_blocked  : card or account blocked by bank or customer
+- issuer_down         : bank-side technical failure surfaced as a generic decline
+
+Signals that matter:
+- Indian salary cycles credit on the 1st-5th; the 25th-31st is the balance trough.
+- A high prior attempt count with no success suggests a standing block, not a moving balance.
+- Large amounts hit ceilings before they hit an empty balance.
+- If this issuer is declining well above the batch rate, suspect issuer_down.
+- A first-time large amount on an otherwise quiet customer can trip fraud rules.
+
+Be calibrated. Insufficient funds is the single most common cause, so do not \
+report high confidence for an exotic cause without a specific signal supporting it."""
+
+
+class ClaudeInferencer:
+    """LLM inference over the ambiguous subset.
+
+    Scoped narrowly on purpose: the LLM is used only where a table cannot work.
+    Routing documented codes through a model would add cost, latency, and a
+    failure mode, in exchange for replacing a correct lookup with a guess.
+    """
+
+    name = "claude"
+
+    def __init__(self, model: str = "claude-opus-5") -> None:
+        import anthropic
+        from pydantic import BaseModel, Field
+
+        class Inference(BaseModel):
+            root_cause: str = Field(description="One of: " + ", ".join(c.value for c in AMBIGUOUS_CANDIDATES))
+            confidence: float = Field(ge=0.0, le=1.0)
+            reasoning: str = Field(description="One sentence citing the specific signals used.")
+
+        self._schema = Inference
+        self._client = anthropic.Anthropic()
+        self._model = model
+
+    def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]:
+        rate = ctx.technical_share(event.issuer, event.occurred_at) or 0.0
+        prompt = f"""Payment failure to diagnose:
+
+reason code        : {event.error_reason}
+instrument         : {event.instrument.value}
+issuer             : {event.issuer}
+amount             : Rs {event.amount}
+occurred           : {event.occurred_at:%Y-%m-%d %H:%M} (day {event.occurred_at.day} of month)
+attempts, prior 24h: {event.prior_attempts_24h}
+attempts, prior 30d: {event.prior_attempts_30d}
+customer LTV       : Rs {event.customer_ltv or 'unknown'}
+customer pays on   : days {event.customer_success_days or 'no history'}
+issuer decline rate: {rate:.1%} (batch average {ctx.batch_technical_share:.1%})
+
+What is the most likely underlying cause?"""
+
+        response = self._client.messages.parse(
+            model=self._model,
+            max_tokens=2000,
+            system=_SYSTEM,
+            messages=[{"role": "user", "content": prompt}],
+            output_format=self._schema,
+        )
+        out = response.parsed_output
+        try:
+            cause = RootCause(out.root_cause)
+        except ValueError:
+            # A model returning something off-menu must not become a silent
+            # mis-diagnosis. Fall back to the base rate and say so.
+            return (
+                RootCause.INSUFFICIENT_FUNDS,
+                0.30,
+                f"model returned unrecognised cause '{out.root_cause}'; using base rate",
+            )
+        return cause, float(out.confidence), out.reasoning
+
