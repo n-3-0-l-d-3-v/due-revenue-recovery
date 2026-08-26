@@ -63,6 +63,46 @@ def enumerate_actions(
     cause = diagnosis.root_cause
     out: list[CandidateAction] = []
 
+    # --- already halted ---------------------------------------------------
+    # Razorpay's T+3 retries are exhausted before a subscription reaches this
+    # state. Proposing another retry ignores that history — and because a retry
+    # always outscores a win-back on raw expected value, it also meant the
+    # post-halted playbook was emitted 45 times and chosen zero times. Retry is
+    # not on the menu here; the question is whether the customer can be saved.
+    if event.event_type is EventType.HALTED_SUBSCRIPTION:
+        if cause in (
+            RootCause.INSTRUMENT_EXPIRED,
+            RootCause.INSTRUMENT_BLOCKED,
+            RootCause.INSTRUMENT_NOT_ENABLED,
+            RootCause.INVALID_VPA,
+        ):
+            out.append(
+                CandidateAction(
+                    action_type=ActionType.REQUEST_INSTRUMENT_SWITCH,
+                    contact_cost=COST_CONTACT,
+                    rationale=f"subscription halted on {cause.value}; only a new instrument revives it",
+                )
+            )
+        elif cause is RootCause.RISK_BLOCKED:
+            out.append(
+                CandidateAction(
+                    action_type=ActionType.STOP_UNCOLLECTIBLE,
+                    rationale="halted after a fraud flag; pursuing it is card-testing behaviour",
+                )
+            )
+        else:
+            out.append(
+                CandidateAction(
+                    action_type=ActionType.WINBACK_SEQUENCE,
+                    contact_cost=COST_CONTACT,
+                    rationale=(
+                        "retries exhausted and the subscription is halted; win-back "
+                        "before the customer is permanently lost"
+                    ),
+                )
+            )
+        return out
+
     def retry_now(why: str) -> None:
         out.append(
             CandidateAction(
@@ -187,21 +227,3 @@ def enumerate_actions(
     )
     return out
 
-
-
-def winback_actions(event: RiskEvent, now: datetime) -> list[CandidateAction]:
-    """Post-`halted` playbook.
-
-    Razorpay's subscription retry ends at `halted`. That state is where a paying
-    customer is actually lost, and native tooling has no opinion about what
-    happens next. This is the gap.
-    """
-    if event.event_type is not EventType.HALTED_SUBSCRIPTION:
-        return []
-    return [
-        CandidateAction(
-            action_type=ActionType.WINBACK_SEQUENCE,
-            contact_cost=COST_CONTACT,
-            rationale="subscription halted after retries were exhausted; win-back before the customer is gone",
-        )
-    ]

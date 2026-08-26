@@ -18,7 +18,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from decimal import Decimal
 
-from recoup.core.actions import enumerate_actions, winback_actions
+from recoup.core.actions import enumerate_actions
 from recoup.core.counters import AttemptCounter
 from recoup.core.diagnose import BatchContext, Diagnoser, default_diagnoser
 from recoup.core.ledger import Ledger
@@ -96,7 +96,7 @@ class RecoveryPipeline:
             gate_ctx = GateContext(now=decided_at, counters=self.counters)
 
             diagnosis = self.diagnoser.diagnose(event, ctx)
-            candidates = enumerate_actions(event, diagnosis, decided_at) + winback_actions(event, decided_at)
+            candidates = enumerate_actions(event, diagnosis, decided_at)
 
             evaluation = self.engine.evaluate(event, candidates, gate_ctx, diagnosis)
             best, why_not = scorer.best(event, diagnosis, evaluation.permitted, decided_at)
