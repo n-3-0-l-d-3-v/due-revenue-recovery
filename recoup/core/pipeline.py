@@ -144,6 +144,7 @@ class RecoveryPipeline:
                         snapshot_contacts_week=self.counters.total_contacts_week(
                             event.customer_id, decided_at, event.contacts_this_week
                         ),
+                        notice_sent_at=decided_at,
                     )
                 )
 
@@ -190,7 +191,7 @@ class RecoveryPipeline:
                 now=when,
                 counters=self.counters,
                 # The pre-debit notice was sent when the action was deferred.
-                notices_sent={pending.event_id: pending.scheduled_for},
+                notices_sent={pending.event_id: pending.notice_sent_at or pending.scheduled_for},
             )
             ctx = BatchContext.from_events(list(events_by_id.values()))
             outcome = self.engine.revalidate(
