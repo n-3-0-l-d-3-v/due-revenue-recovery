@@ -80,3 +80,82 @@ AMBIGUOUS_CANDIDATES: tuple[RootCause, ...] = (
     RootCause.ISSUER_DOWN,
 )
 
+
+# ---------------------------------------------------------------------------
+# Inference context
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class BatchContext:
+    """Observable signals derived from the merchant's own at-risk traffic.
+
+    A naive "decline rate per issuer" is meaningless here: this batch is ALREADY
+    filtered to at-risk events, so every issuer's decline rate is near 100% and
+    nothing is ever elevated relative to anything.
+
+    The signal that survives that filtering is **composition**. During an outage,
+    an issuer's failures shift toward technical reason codes. Comparing an
+    issuer's technical share on a given day against the batch-wide technical share
+    detects outages using only data a merchant already has — no privileged feed.
+
+    Amount thresholds are likewise taken from the batch's own distribution rather
+    than hardcoded, so the same heuristics work for a merchant selling Rs 99
+    subscriptions and one selling Rs 90,000 appliances.
+    """
+
+    technical_share_by_issuer_day: dict[tuple[str, object], float]
+    batch_technical_share: float
+    amount_p50: float
+    amount_p90: float
+
+    @classmethod
+    def from_events(cls, events: list[RiskEvent]) -> BatchContext:
+        totals: dict[tuple[str, object], int] = {}
+        technical: dict[tuple[str, object], int] = {}
+        batch_total = batch_tech = 0
+
+        for e in events:
+            if not e.error_reason:
+                continue
+            key = (e.issuer, e.occurred_at.date())
+            totals[key] = totals.get(key, 0) + 1
+            batch_total += 1
+            mapped = DIAGNOSIS_TABLE.get(e.error_reason)
+            if mapped and mapped[1] is DeclineClass.TECHNICAL:
+                technical[key] = technical.get(key, 0) + 1
+                batch_tech += 1
+
+        shares = {
+            k: technical.get(k, 0) / v
+            for k, v in totals.items()
+            if v >= 3  # a single failure is noise, not a signal
+        }
+        amounts = sorted(float(e.amount) for e in events)
+
+        def pct(p: float) -> float:
+            if not amounts:
+                return 0.0
+            return amounts[min(len(amounts) - 1, int(len(amounts) * p))]
+
+        return cls(
+            technical_share_by_issuer_day=shares,
+            batch_technical_share=(batch_tech / batch_total) if batch_total else 0.0,
+            amount_p50=pct(0.50),
+            amount_p90=pct(0.90),
+        )
+
+    def technical_share(self, issuer: str, when) -> float | None:
+        return self.technical_share_by_issuer_day.get((issuer, when.date()))
+
+    def outage_suspected(self, issuer: str, when, factor: float = 2.0) -> bool:
+        """This issuer's failures skew technical today, well above the batch norm."""
+        share = self.technical_share(issuer, when)
+        if share is None or not self.batch_technical_share:
+            return False
+        return share > self.batch_technical_share * factor
+
+
+class Inferencer(Protocol):
+    def infer(self, event: RiskEvent, ctx: BatchContext) -> tuple[RootCause, float, str]: ...
+
