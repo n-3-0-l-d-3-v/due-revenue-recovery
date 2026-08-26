@@ -33,6 +33,7 @@ from decimal import Decimal
 from recoup.core.diagnose import BatchContext
 from recoup.core.models import (
     ActionType,
+    EventType,
     CandidateAction,
     Diagnosis,
     EVComponents,
@@ -179,6 +180,21 @@ class Scorer:
         return min(penalty, event.amount * ISSUER_TRUST_PENALTY_CAP).quantize(Decimal("0.01"))
 
     def churn_risk(self, event: RiskEvent, action: CandidateAction) -> float:
+        """Hazard that this action costs us the customer relationship.
+
+        Zero once the relationship is already broken. A halted subscription means
+        the customer is gone — the LTV is forfeit before we act, so a win-back
+        attempt risks nothing that has not already been lost.
+
+        Without this carve-out the arithmetic was perverse: churn cost came to
+        0.02 x LTV, LTV is ~11x the amount for a recurring customer, so the
+        penalty (0.22 x amount) always exceeded win-back's recovery (0.12 x
+        amount). Every post-halted action scored negative and the playbook was
+        proposed 45 times and chosen zero times — a feature that existed only in
+        the README.
+        """
+        if event.event_type is EventType.HALTED_SUBSCRIPTION:
+            return 0.0
         if action.contact_cost > 0:
             return CHURN_HAZARD_PER_CONTACT * (1 + event.contacts_this_week)
         if action.attempt_cost > 0:
