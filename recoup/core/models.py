@@ -139,3 +139,82 @@ class OutcomeStatus(str, Enum):
     QUARANTINED = "quarantined"  # executor circuit breaker tripped
 
 
+# --------------------------------------------------------------------------
+# Events
+# --------------------------------------------------------------------------
+
+
+class RiskEvent(BaseModel):
+    """One at-risk rupee amount, from any of the five leak points."""
+
+    event_id: str
+    batch_id: str
+    occurred_at: datetime
+    event_type: EventType
+
+    amount: Decimal = Field(description="At-risk amount in INR")
+    currency: str = "INR"
+
+    instrument: Instrument
+    instrument_token: str = Field(description="Salted hash. Never a PAN.")
+    issuer: str
+
+    customer_id: str
+    order_id: str | None = None
+    payment_id: str | None = None
+    subscription_id: str | None = None
+
+    # Razorpay error triple, absent for non-failure leak types
+    error_code: str | None = None
+    error_source: FailureSource | None = None
+    error_step: FailureStep | None = None
+    error_reason: str | None = None
+
+    # Context the gate and scorer need
+    prior_attempts_24h: int = 0
+    prior_attempts_30d: int = 0
+
+    # Instrument success history — the merchant's own observations, no privileged
+    # feed required. This is the signal that separates the three biggest causes
+    # behind a generic decline:
+    #   no recent successes at all        -> the instrument is blocked
+    #   a LARGER charge cleared recently  -> not a per-transaction ceiling
+    #   only smaller charges cleared      -> a ceiling or an empty balance
+    recent_success_count: int = 0
+    max_recent_success_amount: Decimal | None = None
+    contacts_this_week: int = 0
+    consent_active: bool = True
+    obligation_valid: bool = True
+    auth_expires_at: datetime | None = None
+    customer_ltv: Decimal | None = None
+    customer_success_days: list[int] = Field(
+        default_factory=list,
+        description="Days of month this customer has historically paid on. "
+        "Beats a hard-coded salary-cycle window when non-empty.",
+    )
+
+    # Simulator ground truth — populated only by sim/, never in production paths.
+    truth_root_cause: RootCause | None = None
+    truth_recoverable: bool | None = None
+    truth_best_action: ActionType | None = None
+
+
+class Diagnosis(BaseModel):
+    root_cause: RootCause
+    decline_class: DeclineClass
+    confidence: float = Field(ge=0.0, le=1.0)
+    evidence_ref: str = Field(
+        description="Citation for why this mapping holds — a Razorpay doc anchor "
+        "or network rule id. Every mapping must justify itself."
+    )
+    reasoned_by: str = Field(default="table", description="'table' or 'llm'")
+
+
+class CandidateAction(BaseModel):
+    action_type: ActionType
+    execute_at: datetime | None = None
+    attempt_cost: Decimal = Decimal("0")
+    contact_cost: Decimal = Decimal("0")
+    rationale: str = ""
+
+
