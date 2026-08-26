@@ -291,6 +291,11 @@ def generate_batch(
             )
 
         # --- latent truth -------------------------------------------------
+        # An ambiguous decline carries a hidden real cause: the issuer refused
+        # without saying why, so the system must infer what actually happened.
+        if root_cause is RootCause.AMBIGUOUS_DECLINE:
+            root_cause = _weighted(rng, priors.AMBIGUOUS_HIDDEN_CAUSE)  # type: ignore[assignment]
+
 
         funds_day: int | None = None
         if root_cause is RootCause.INSUFFICIENT_FUNDS:

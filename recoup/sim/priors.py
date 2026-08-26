@@ -172,6 +172,32 @@ TECHNICAL_REASON_WEIGHTS: dict[Instrument, dict[str, float]] = {
 }
 
 
+# Hidden true cause behind an ambiguous decline.
+#
+# This is the only place diagnosis is a genuine PREDICTION rather than a lookup.
+# Codes like `card_declined` and `payment_failed` mean the issuer refused without
+# saying why — Razorpay's docs document the code, not the cause, because the cause
+# was never transmitted. The system must infer it from context.
+#
+# Reporting "99% diagnosis accuracy" over all codes would be dishonest: for
+# documented codes the mapping is a table lookup and accuracy is 100% by
+# construction. Accuracy is only meaningful on THIS subset, and that is the
+# number the submission reports.
+#
+# [DERIVED] Ordering follows NPCI's finding that insufficient balance dominates
+# business declines; exact weights are [ASSUMED] and swept.
+AMBIGUOUS_HIDDEN_CAUSE: dict[RootCause, float] = {
+    RootCause.INSUFFICIENT_FUNDS: 0.42,
+    RootCause.LIMIT_EXCEEDED: 0.18,
+    RootCause.RISK_BLOCKED: 0.15,
+    RootCause.INSTRUMENT_BLOCKED: 0.12,
+    RootCause.ISSUER_DOWN: 0.13,
+}
+
+AMBIGUOUS_REASONS: frozenset[str] = frozenset(
+    {"card_declined", "payment_failed", "payment_declined"}
+)
+
 # ---------------------------------------------------------------------------
 # Recovery probabilities — the latent truth the oracle samples from
 # ---------------------------------------------------------------------------
