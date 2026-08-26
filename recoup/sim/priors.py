@@ -296,3 +296,18 @@ ISSUER_OUTAGE_SEVERITY: tuple[float, float] = (0.25, 0.85)
 ISSUER_OUTAGE_HOURS: tuple[int, int] = (2, 9)
 
 
+# ---------------------------------------------------------------------------
+# Amounts and customer value
+# ---------------------------------------------------------------------------
+
+# [ASSUMED] Log-normal ticket sizes for a mid-market Indian merchant.
+AMOUNT_LOGNORM_MU: float = 6.6
+AMOUNT_LOGNORM_SIGMA: float = 0.95
+AMOUNT_MIN: Decimal = Decimal("49")
+AMOUNT_MAX: Decimal = Decimal("250000")
+
+# [ASSUMED] LTV as a multiple of ticket size, by whether the payment is recurring.
+LTV_MULTIPLE_ONE_TIME: float = 2.8
+LTV_MULTIPLE_RECURRING: float = 11.0
+
+
