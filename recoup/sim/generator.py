@@ -229,6 +229,34 @@ def _hidden_cause(
     return _weighted(rng, weights)  # type: ignore[return-value]
 
 
+def _instrument_history(
+    rng: random.Random, cause: RootCause, amount: Decimal
+) -> tuple[int, Decimal | None]:
+    """Recent success history on this instrument, consistent with the true cause.
+
+    Returns (recent_success_count, max_recent_success_amount).
+
+    The consistency is what creates the signal. A blocked instrument clears
+    nothing; a per-transaction ceiling means no larger charge ever cleared. Both
+    are things a merchant can observe in their own data, which is why adding them
+    is a realism fix rather than a way to flatter the number.
+    """
+    p_none = priors.P_NO_RECENT_SUCCESS.get(cause, 0.15)
+    if rng.random() < p_none:
+        return 0, None
+
+    count = rng.choices([1, 2, 3, 4, 5], weights=[0.30, 0.26, 0.20, 0.14, 0.10])[0]
+
+    if rng.random() < priors.P_LARGER_SUCCESS_EXISTS.get(cause, 0.5):
+        # A larger charge cleared before — rules out a ceiling at this amount.
+        top = amount * Decimal(str(round(rng.uniform(1.10, 3.0), 3)))
+    else:
+        # Only smaller charges cleared.
+        top = amount * Decimal(str(round(rng.uniform(0.15, 0.95), 3)))
+
+    return count, top.quantize(Decimal("0.01"))
+
+
 def _pick_reason(
     rng: random.Random, instrument: Instrument, decline_class: DeclineClass
 ) -> str:
@@ -329,6 +357,11 @@ def generate_batch(
             )
 
         # --- latent truth -------------------------------------------------
+        # An ambiguous decline carries a hidden real cause. The issuer refused
+        # without saying why, so the observable code is AMBIGUOUS_DECLINE and the
+        # system must infer what actually happened. This is the only subset where
+        # diagnosis is a prediction rather than a lookup, and therefore the only
+        # subset where accuracy means anything.
         if root_cause is RootCause.AMBIGUOUS_DECLINE:
             root_cause = _hidden_cause(
                 rng,
@@ -338,6 +371,7 @@ def generate_batch(
                 occurred_at=occurred_at,
             )
 
+        success_count, max_success = _instrument_history(rng, root_cause, amount)
 
         funds_day: int | None = None
         if root_cause is RootCause.INSUFFICIENT_FUNDS:
@@ -375,6 +409,8 @@ def generate_batch(
                 error_reason=error_reason,
                 prior_attempts_24h=prior_24h,
                 prior_attempts_30d=prior_30d_seed,
+                recent_success_count=success_count,
+                max_recent_success_amount=max_success,
                 contacts_this_week=customer.contacts_this_week,
                 consent_active=customer.consent_active,
                 obligation_valid=latent.obligation_valid,
