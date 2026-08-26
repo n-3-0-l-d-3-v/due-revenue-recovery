@@ -35,6 +35,22 @@ HUMAN_REVIEW_COST = Decimal("60.00")
 # Diagnoses at or below this confidence are treated as uncertain.
 UNCERTAIN_BELOW = 0.55
 
+# Rules a human can actually do something about.
+#
+# Consent can be re-granted — an account manager can call and ask. Everything
+# else the gate blocks on is settled: a cancelled obligation stays cancelled, an
+# expired authorisation stays expired, a network cap resolves by waiting, and a
+# terminal decline is terminal. Escalating those produces items whose only
+# possible resolution is "acknowledged", which is how exception queues become
+# wallpaper and stop being read.
+RESOLVABLE_BLOCKS: frozenset[str] = frozenset({"consent.active"})
+
+# A correct automated write-off is not an exception. Only escalate a negative-EV
+# decision when the amount is large enough that a human might see an option the
+# system cannot price — a payment plan, a goodwill call, a known VIP.
+NO_VIABLE_ACTION_FLOOR = HUMAN_REVIEW_COST * 10
+
+
 class ExceptionReason(str, Enum):
     BLOCKED_BUT_VALUABLE = "blocked_but_valuable"
     UNCERTAIN_DIAGNOSIS = "uncertain_diagnosis"
@@ -151,14 +167,18 @@ class ExceptionQueue:
 
         if decision.chosen is None and decision.blocked_by:
             rules = sorted({g.rule_id for g in decision.blocked_by})
-            yield (
-                ExceptionReason.BLOCKED_BUT_VALUABLE,
-                f"Rs {amount:,.0f} stranded by {', '.join(rules)}",
-            )
+            resolvable = sorted(set(rules) & RESOLVABLE_BLOCKS)
+            if resolvable:
+                yield (
+                    ExceptionReason.BLOCKED_BUT_VALUABLE,
+                    f"Rs {amount:,.0f} stranded by {', '.join(resolvable)}",
+                )
+            # Blocked by something settled — correct, automated, and not work.
             return
 
         if decision.chosen is None and decision.not_chosen_why:
-            yield (ExceptionReason.NO_VIABLE_ACTION, decision.not_chosen_why)
+            if amount >= NO_VIABLE_ACTION_FLOOR:
+                yield (ExceptionReason.NO_VIABLE_ACTION, decision.not_chosen_why)
             return
 
         if diagnosis.reasoned_by != "table" and diagnosis.confidence <= UNCERTAIN_BELOW:
