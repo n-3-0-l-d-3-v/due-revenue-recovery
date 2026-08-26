@@ -241,3 +241,62 @@ def _capture_window(event, action, ctx, params, diagnosis):
         )
     return False, f"authorisation valid until {event.auth_expires_at:%Y-%m-%d %H:%M}"
 
+
+# ---------------------------------------------------------------------------
+# Results
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class DeferredAction:
+    action: CandidateAction
+    defer_until: datetime
+    rule_id: str
+    rationale: str
+
+
+@dataclass
+class EvaluationResult:
+    gate_results: list[GateResult]
+    permitted: list[CandidateAction]
+    deferred: list[DeferredAction]
+
+    @property
+    def blocked(self) -> list[GateResult]:
+        return [g for g in self.gate_results if g.verdict is GateVerdict.BLOCK]
+
+
+@dataclass
+class PendingAction:
+    """A deferred action awaiting its execution window.
+
+    Carries a snapshot of what was true at decision time so that re-validation can
+    report *what changed*, not merely that something did. "Consent was active when
+    we decided and is not now" is an auditable statement; "blocked" is not.
+    """
+
+    decision_id: str
+    event_id: str
+    action: CandidateAction
+    scheduled_for: datetime
+    deferred_by_rule: str
+    snapshot_consent: bool
+    snapshot_attempts_24h: int
+    snapshot_contacts_week: int
+    # When the RBI pre-debit notice was dispatched — the moment we deferred, not
+    # the moment the action fires. Confusing the two restarts the 24h clock at
+    # execution time and the action can never become eligible.
+    notice_sent_at: datetime | None = None
+
+
+@dataclass
+class RevalidationOutcome:
+    approved: bool
+    at: datetime
+    gate_results: list[GateResult]
+    changed_since_decision: list[str]
+
+    @property
+    def blocking_rules(self) -> list[str]:
+        return [g.rule_id for g in self.gate_results if g.verdict is GateVerdict.BLOCK]
+
