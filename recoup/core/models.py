@@ -262,3 +262,144 @@ class EVComponents(BaseModel):
         return gross - costs
 
 
+# --------------------------------------------------------------------------
+# Decision record — the audit trail unit
+# --------------------------------------------------------------------------
+
+
+class Outcome(BaseModel):
+    status: OutcomeStatus
+    recovered_amount: Decimal = Decimal("0")
+    observed_at: datetime | None = None
+    detail: str = ""
+
+
+class HashChained(BaseModel):
+    """Base for anything that goes in the ledger.
+
+    Sealing is one-way on purpose. Once a record is sealed you cannot add fields
+    to it — which is why an execution-time re-validation is a SEPARATE chained
+    entry rather than a mutation of the decision it re-checks. An append-only log
+    whose entries can be edited after the fact is a log, not an audit trail.
+    """
+
+    prev_hash: str = ""
+    hash: str = ""
+
+    def compute_hash(self) -> str:
+        """Deterministic content hash over everything except the hash field.
+
+        Sorted keys and ISO timestamps keep this stable across processes, which
+        is what makes replay verification meaningful.
+        """
+        payload = self.model_dump(mode="json", exclude={"hash"})
+        canonical = json.dumps(payload, sort_keys=True, separators=(",", ":"))
+        return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+
+    def seal(self, prev_hash: str):
+        """Link this entry to the chain and freeze its hash."""
+        self.prev_hash = prev_hash
+        self.hash = self.compute_hash()
+        return self
+
+
+class RevalidationEntry(HashChained):
+    """The gate re-run immediately before a deferred action executes.
+
+    Chained separately from the decision it refers to, and linked by decision_id.
+    `changed_since_decision` is the field that makes this worth keeping: "blocked"
+    is a safety property, but "consent was active when we decided and is not now"
+    is an auditable statement about the world.
+    """
+
+    entry_id: str
+    decision_id: str
+    event_id: str
+    at: datetime
+    approved: bool
+    blocking_rules: list[str] = Field(default_factory=list)
+    changed_since_decision: list[str] = Field(default_factory=list)
+    gate_results: list[GateResult] = Field(default_factory=list)
+
+
+class DecisionRecord(HashChained):
+    """One decision about one at-risk event. Append-only, hash-chained.
+
+    Ordering of fields mirrors the control flow so a reader can follow the
+    decision top to bottom: event -> diagnosis -> candidates -> gate ->
+    permitted -> scoring -> choice -> execution -> outcome.
+    """
+
+    decision_id: str
+    batch_id: str
+    event_id: str
+    decided_at: datetime
+
+    event: RiskEvent
+    diagnosis: Diagnosis
+
+    candidates: list[CandidateAction]
+    gate_results: list[GateResult]
+    permitted: list[CandidateAction]
+
+    ev_components: EVComponents | None = None
+    chosen: CandidateAction | None = None
+    not_chosen_why: str | None = None
+
+    # Execution. Populated before sealing when the action fires immediately;
+    # for deferred actions the outcome arrives via a separate RevalidationEntry
+    # and ExecutionEntry, because this record is already sealed by then.
+    executed_at: datetime | None = None
+    idempotency_key: str | None = None
+    deferred_until: datetime | None = None
+    outcome: Outcome | None = None
+
+    @property
+    def blocked_by(self) -> list[GateResult]:
+        return [g for g in self.gate_results if g.verdict == GateVerdict.BLOCK]
+
+
+class BatchMetrics(BaseModel):
+    """What we report per strategy in the counterfactual harness.
+
+    Recovery rate alone is a misleading headline: a strategy that recovers more
+    while burning 5x the attempts can be worth less. Always report the costs
+    alongside the wins.
+    """
+
+    strategy: str
+    batch_id: str
+    events: int
+
+    amount_at_risk: Decimal
+    amount_recovered: Decimal
+
+    attempts_spent: int
+    contacts_sent: int
+    policy_violations: int
+    estimated_penalty_exposure: Decimal
+
+    exceptions_raised: int
+    net_value: Decimal
+
+    # Diagnosis quality, measurable because the simulator carries ground truth
+    diagnosis_precision: float | None = None
+    diagnosis_recall: float | None = None
+
+    @property
+    def recovery_rate(self) -> float:
+        if self.amount_at_risk == 0:
+            return 0.0
+        return float(self.amount_recovered / self.amount_at_risk)
+
+    @property
+    def cost_per_recovered_rupee(self) -> Decimal | None:
+        if self.amount_recovered == 0:
+            return None
+        spent = self.amount_recovered - self.net_value
+        return spent / self.amount_recovered
+
+
+def dump_for_audit(record: DecisionRecord) -> dict[str, Any]:
+    """Stable JSON form for the ledger and the compliance certificate."""
+    return record.model_dump(mode="json")
