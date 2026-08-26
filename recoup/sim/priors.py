@@ -242,3 +242,28 @@ TERMINAL_FOR_RETRY_SWITCHABLE: frozenset[RootCause] = frozenset(
 # classified as the attacker.
 
 
+# ---------------------------------------------------------------------------
+# Timing effects
+# ---------------------------------------------------------------------------
+
+# Salary-cycle effect on insufficient_funds recovery.
+# [ASSUMED] India-specific. Most salaried credit lands on the 1st or the last
+# working day. Per-customer observed payment days override this when available.
+SALARY_WINDOW_DAYS: frozenset[int] = frozenset({1, 2, 3, 4, 5})
+SALARY_WINDOW_MULTIPLIER: float = 2.4
+LATE_MONTH_DAYS: frozenset[int] = frozenset({26, 27, 28, 29, 30, 31})
+LATE_MONTH_MULTIPLIER: float = 0.55
+
+# Retrying into an ongoing outage fails again. Recovery requires the issuer to heal.
+ISSUER_DOWN_RETRY_MULTIPLIER: float = 0.08
+
+# [ASSUMED] Waking someone at 3am converts poorly. Business hours perform better.
+HOUR_MULTIPLIER: dict[range, float] = {
+    range(0, 7): 0.42,
+    range(7, 11): 1.15,
+    range(11, 18): 1.0,
+    range(18, 22): 1.22,
+    range(22, 24): 0.61,
+}
+
+
