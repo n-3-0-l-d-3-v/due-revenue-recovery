@@ -134,3 +134,28 @@ rules:
        request_instrument_switch, request_vpa_repair, winback_sequence]
     params: {}
 
+  # -------------------------------------------------------------------------
+  # Arithmetic impossibility — cheap gates that need no expected value
+  # -------------------------------------------------------------------------
+  - id: value.below_cost_floor
+    title: "Never spend more than the amount at risk is worth"
+    source: "Recoup policy"
+    note: >
+      Deliberately weak: it fires only when NO action could be positive at any
+      recovery probability. The real value judgement needs an EV and belongs in
+      the scorer. A gate that guessed at value would be a gate that blocks
+      profitable actions, which is worse than one that lets the scorer decide.
+    verdict: block
+    applies_to:
+      [retry_now, retry_scheduled, nudge_payment_link, request_instrument_switch,
+       request_vpa_repair, winback_sequence]
+    params:
+      min_amount: 5.0
+
+  - id: auth.capture_window
+    title: "Cannot capture an authorisation after it has expired"
+    source: "Razorpay: uncaptured authorisations are auto-refunded, 5 days outer bound"
+    verdict: block
+    applies_to: [capture_authorized]
+    params:
+      safety_margin_hours: 6
