@@ -111,6 +111,11 @@ class Counterfactual:
 
         plan = sorted(strategy.plan(self.world.events), key=lambda p: p.execute_at)
         recovered: set[str] = set()
+        # Cumulative churn hazard already charged per customer. A customer can
+        # only be lost once, so hazard saturates at 1.0 of their LTV; charging
+        # ten escalating hazards for ten contacts would bill more than the
+        # customer is worth and make over-contacting look worse than it is.
+        self._churn_charged: dict[str, float] = {}
 
         for planned in plan:
             event = self.events[planned.event_id]
@@ -145,8 +150,8 @@ class Counterfactual:
         if planned.is_attempt:
             result.attempts_spent += 1
             result.direct_cost += COST_RETRY
-            result.churn_cost += Decimal(str(CHURN_HAZARD_PER_RETRY)) * (
-                event.customer_ltv or Decimal("0")
+            result.churn_cost += self._churn_charge(
+                event, CHURN_HAZARD_PER_RETRY
             )
             counters.record_attempt(
                 event.instrument_token, planned.execute_at, event.payment_id
@@ -159,13 +164,25 @@ class Counterfactual:
             )
             # Churn hazard compounds with every additional contact — this is the
             # cost that makes an unbounded nudger lose money.
-            result.churn_cost += Decimal(str(CHURN_HAZARD_PER_CONTACT * (1 + sent))) * (
-                event.customer_ltv or Decimal("0")
+            result.churn_cost += self._churn_charge(
+                event, CHURN_HAZARD_PER_CONTACT * (1 + sent)
             )
             counters.record_contact(event.customer_id, planned.execute_at)
 
         if not wasted:
             result.support_cost += COST_PER_SUPPORT_TICKET * Decimal(str(P_SUPPORT_TICKET))
+
+    def _churn_charge(self, event: RiskEvent, hazard: float) -> Decimal:
+        """Charge incremental churn hazard, saturating at 100% of customer LTV."""
+        already = self._churn_charged.get(event.customer_id, 0.0)
+        room = max(0.0, 1.0 - already)
+        applied = min(hazard, room)
+        if applied <= 0:
+            return Decimal("0")
+        self._churn_charged[event.customer_id] = already + applied
+        return (Decimal(str(applied)) * (event.customer_ltv or Decimal("0"))).quantize(
+            Decimal("0.01")
+        )
 
     # -- violations --------------------------------------------------------
 
