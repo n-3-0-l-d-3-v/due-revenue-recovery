@@ -49,3 +49,14 @@ rules:
     params:
       max_retries: 3
 
+  - id: network.do_not_retry_terminal
+    title: "Never retry a terminal decline on the same instrument"
+    source: "Mastercard MAC 03 'Do Not Try Again'; $0.10 per attempt under Excessive Attempts"
+    note: >
+      Expired, blocked, not-enabled, invalid VPA, and risk-blocked. Retrying a
+      risk-blocked payment is the card-testing pattern that gets a merchant
+      classified as the attacker, which is worse than the fine.
+    verdict: block
+    applies_to: [retry_now, retry_scheduled]
+    params: {}
+
