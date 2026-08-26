@@ -35,6 +35,10 @@ class PlannedAction:
     event_id: str
     action_type: ActionType
     execute_at: datetime
+    # When this strategy dispatched the RBI pre-debit notice, if it did at all.
+    # Strategies that never notify leave this None and are scored as breaching
+    # the window — which is exactly what they do.
+    notice_sent_at: datetime | None = None
 
     @property
     def is_attempt(self) -> bool:
@@ -190,6 +194,7 @@ class GatedAgent:
                         event_id=pending.event_id,
                         action_type=pending.action.action_type,
                         execute_at=pending.scheduled_for,
+                        notice_sent_at=pending.notice_sent_at,
                     )
                 )
         return out

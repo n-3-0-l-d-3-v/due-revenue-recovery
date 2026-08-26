@@ -180,7 +180,12 @@ class Counterfactual:
         if planned.action_type in UNGATED_ACTIONS:
             return
 
-        gate_ctx = GateContext(now=planned.execute_at, counters=counters)
+        notices = (
+            {event.event_id: planned.notice_sent_at} if planned.notice_sent_at else {}
+        )
+        gate_ctx = GateContext(
+            now=planned.execute_at, counters=counters, notices_sent=notices
+        )
         diagnosis = self.diagnoser.diagnose(event, self.ctx)
         candidate = CandidateAction(action_type=planned.action_type)
 
