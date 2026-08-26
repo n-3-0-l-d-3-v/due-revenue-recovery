@@ -48,6 +48,34 @@ from recoup.sim.oracle import RecoveryOracle
 PENALTY_PER_EXCESS_ATTEMPT = Decimal("8.50")
 
 
+@dataclass(frozen=True)
+class CostModel:
+    """Every economic assumption the harness makes, in one injectable object.
+
+    These were module constants until the sensitivity analysis needed to vary
+    them. Constants would have forced monkeypatching of already-imported names —
+    fragile, and it would have made the sweep silently no-op if an import style
+    changed. Making them a parameter means a sweep is just a different value,
+    and the defaults remain exactly the published priors.
+
+    Every field here is [ASSUMED]. None is measured. That is precisely why the
+    sensitivity report exists.
+    """
+
+    retry_cost: Decimal = COST_RETRY
+    contact_cost: Decimal = COST_CONTACT
+    churn_per_contact: float = CHURN_HAZARD_PER_CONTACT
+    churn_per_retry: float = CHURN_HAZARD_PER_RETRY
+    support_ticket_cost: Decimal = COST_PER_SUPPORT_TICKET
+    p_support_ticket: float = P_SUPPORT_TICKET
+    penalty_per_excess_attempt: Decimal = PENALTY_PER_EXCESS_ATTEMPT
+
+    def with_(self, **overrides) -> "CostModel":
+        from dataclasses import replace
+
+        return replace(self, **overrides)
+
+
 @dataclass
 class StrategyResult:
     name: str
@@ -90,7 +118,8 @@ class StrategyResult:
 
 
 class Counterfactual:
-    def __init__(self, world: SimWorld) -> None:
+    def __init__(self, world: SimWorld, costs: CostModel | None = None) -> None:
+        self.costs = costs or CostModel()
         self.world = world
         self.events = {e.event_id: e for e in world.events}
         self.amount_at_risk = sum((e.amount for e in world.events), Decimal("0"))
@@ -149,28 +178,30 @@ class Counterfactual:
     ) -> None:
         if planned.is_attempt:
             result.attempts_spent += 1
-            result.direct_cost += COST_RETRY
+            result.direct_cost += self.costs.retry_cost
             result.churn_cost += self._churn_charge(
-                event, CHURN_HAZARD_PER_RETRY
+                event, self.costs.churn_per_retry
             )
             counters.record_attempt(
                 event.instrument_token, planned.execute_at, event.payment_id
             )
         if planned.is_contact:
             result.contacts_sent += 1
-            result.direct_cost += COST_CONTACT
+            result.direct_cost += self.costs.contact_cost
             sent = counters.total_contacts_week(
                 event.customer_id, planned.execute_at, event.contacts_this_week
             )
             # Churn hazard compounds with every additional contact — this is the
             # cost that makes an unbounded nudger lose money.
             result.churn_cost += self._churn_charge(
-                event, CHURN_HAZARD_PER_CONTACT * (1 + sent)
+                event, self.costs.churn_per_contact * (1 + sent)
             )
             counters.record_contact(event.customer_id, planned.execute_at)
 
         if not wasted:
-            result.support_cost += COST_PER_SUPPORT_TICKET * Decimal(str(P_SUPPORT_TICKET))
+            result.support_cost += self.costs.support_ticket_cost * Decimal(
+                str(self.costs.p_support_ticket)
+            )
 
     def _churn_charge(self, event: RiskEvent, hazard: float) -> Decimal:
         """Charge incremental churn hazard, saturating at 100% of customer LTV."""
@@ -219,7 +250,7 @@ class Counterfactual:
             result.policy_violations += 1
             result.violations_by_rule[rule] = result.violations_by_rule.get(rule, 0) + 1
             if rule.startswith("network."):
-                result.penalty_exposure += PENALTY_PER_EXCESS_ATTEMPT
+                result.penalty_exposure += self.costs.penalty_per_excess_attempt
 
 
 def render(results: list[StrategyResult]) -> str:
