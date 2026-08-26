@@ -61,10 +61,17 @@ def _posterior(
     amount,
     prior_attempts: int,
     occurred_at,
+    recent_success_count: int,
+    max_recent_success_amount,
 ) -> dict[RootCause, float]:
     """The exact posterior given everything a diagnoser can observe.
 
-        P(cause | context) from the context multipliers alone.
+        P(cause | context, history) ∝ P(cause | context) · P(history | cause)
+
+    The prior comes from the context multipliers; the likelihood comes from the
+    instrument success history. The history terms carry most of the signal —
+    without them the posterior argmax collapsed onto the majority class for
+    almost every event.
     """
     weights = dict(priors.AMBIGUOUS_HIDDEN_CAUSE)
 
@@ -84,6 +91,18 @@ def _posterior(
         for cause, mult in priors.AMBIGUOUS_CONTEXT_MULTIPLIERS[signal].items():
             weights[cause] = weights.get(cause, 0.0) * mult
 
+    # Likelihood of the observed instrument history under each cause.
+    for cause in list(weights):
+        p_none = priors.P_NO_RECENT_SUCCESS.get(cause, 0.15)
+        if recent_success_count == 0:
+            weights[cause] *= p_none
+        else:
+            p_larger = priors.P_LARGER_SUCCESS_EXISTS.get(cause, 0.5)
+            larger = (
+                max_recent_success_amount is not None
+                and max_recent_success_amount > amount
+            )
+            weights[cause] *= (1.0 - p_none) * (p_larger if larger else 1.0 - p_larger)
 
     total = sum(weights.values())
     return {k: v / total for k, v in weights.items()} if total else weights
@@ -109,6 +128,8 @@ def bayes_ceiling(world: SimWorld) -> CeilingReport:
             amount=e.amount,
             prior_attempts=e.prior_attempts_30d,
             occurred_at=e.occurred_at,
+            recent_success_count=e.recent_success_count,
+            max_recent_success_amount=e.max_recent_success_amount,
         )
         best = max(posterior, key=lambda k: posterior[k])
         hit = int(best == truth)
