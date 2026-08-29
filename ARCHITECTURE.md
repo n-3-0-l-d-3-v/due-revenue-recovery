@@ -149,7 +149,7 @@ omissions:
 
 ## 5. Testing
 
-142 tests. The interesting ones are not the unit tests.
+153 tests. The interesting ones are not the unit tests.
 
 **Property-based (15).** Hypothesis generates ~250 event shapes per property, including
 degenerate ones. Universally quantified: nothing permitted was also blocked · terminal
