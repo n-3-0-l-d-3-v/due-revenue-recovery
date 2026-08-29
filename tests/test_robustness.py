@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from recoup.harness.robustness import sweep
+from due.harness.robustness import sweep
 
 N_SEEDS = 30
 

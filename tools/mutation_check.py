@@ -24,8 +24,8 @@ spot at exactly the place a fine or a compliance breach would come from.
 
 import pathlib, subprocess, sys, os, shutil
 
-RULES = pathlib.Path("recoup/core/policy/rules.yaml")
-ENGINE = pathlib.Path("recoup/core/policy/engine.py")
+RULES = pathlib.Path("due/core/policy/rules.yaml")
+ENGINE = pathlib.Path("due/core/policy/engine.py")
 ORIG_RULES = RULES.read_text(encoding="utf-8")
 ORIG_ENGINE = ENGINE.read_text(encoding="utf-8")
 

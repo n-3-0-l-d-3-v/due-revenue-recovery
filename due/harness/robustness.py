@@ -17,9 +17,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 
-from recoup.harness.counterfactual import Counterfactual, StrategyResult
-from recoup.harness.strategies import all_strategies
-from recoup.sim.generator import generate_batch
+from due.harness.counterfactual import Counterfactual, StrategyResult
+from due.harness.strategies import all_strategies
+from due.sim.generator import generate_batch
 
 
 @dataclass

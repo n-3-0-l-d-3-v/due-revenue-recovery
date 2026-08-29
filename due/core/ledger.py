@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 
-from recoup.core.models import DecisionRecord, HashChained, RevalidationEntry
+from due.core.models import DecisionRecord, HashChained, RevalidationEntry
 
 GENESIS = "0" * 64
 

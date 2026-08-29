@@ -29,10 +29,10 @@ from decimal import Decimal
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis import strategies as st
 
-from recoup.core.actions import enumerate_actions
-from recoup.core.counters import AttemptCounter
-from recoup.core.diagnose import DIAGNOSIS_TABLE, BatchContext, default_diagnoser
-from recoup.core.models import (
+from due.core.actions import enumerate_actions
+from due.core.counters import AttemptCounter
+from due.core.diagnose import DIAGNOSIS_TABLE, BatchContext, default_diagnoser
+from due.core.models import (
     TERMINAL_FOR_RETRY,
     ActionType,
     CandidateAction,
@@ -43,8 +43,8 @@ from recoup.core.models import (
     RiskEvent,
     RootCause,
 )
-from recoup.core.pipeline import RecoveryPipeline
-from recoup.core.policy.engine import UNGATED_ACTIONS, GateContext, PolicyEngine
+from due.core.pipeline import RecoveryPipeline
+from due.core.policy.engine import UNGATED_ACTIONS, GateContext, PolicyEngine
 
 ENGINE = PolicyEngine()
 DIAGNOSER = default_diagnoser()

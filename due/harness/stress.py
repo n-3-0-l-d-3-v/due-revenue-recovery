@@ -22,11 +22,11 @@ import random
 import time
 from dataclasses import dataclass, replace
 
-from recoup.core.pipeline import RecoveryPipeline
-from recoup.harness.counterfactual import Counterfactual
-from recoup.harness.strategies import all_strategies
-from recoup.sim import priors
-from recoup.sim.generator import generate_batch
+from due.core.pipeline import RecoveryPipeline
+from due.harness.counterfactual import Counterfactual
+from due.harness.strategies import all_strategies
+from due.sim import priors
+from due.sim.generator import generate_batch
 
 
 @dataclass

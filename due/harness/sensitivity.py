@@ -19,9 +19,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from decimal import Decimal
 
-from recoup.harness.counterfactual import CostModel, Counterfactual
-from recoup.harness.strategies import BlindRetry, FixedT3, GatedAgent
-from recoup.sim.generator import generate_batch
+from due.harness.counterfactual import CostModel, Counterfactual
+from due.harness.strategies import BlindRetry, FixedT3, GatedAgent
+from due.sim.generator import generate_batch
 
 
 @dataclass

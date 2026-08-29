@@ -12,7 +12,7 @@ import statistics
 
 import pytest
 
-from recoup.core.diagnose import (
+from due.core.diagnose import (
     AMBIGUOUS_REASONS,
     DIAGNOSIS_TABLE,
     BatchContext,
@@ -22,9 +22,9 @@ from recoup.core.diagnose import (
     default_diagnoser,
     evaluate,
 )
-from recoup.core.models import DeclineClass, EventType, RootCause
-from recoup.sim.ceiling import bayes_ceiling
-from recoup.sim.generator import generate_batch
+from due.core.models import DeclineClass, EventType, RootCause
+from due.sim.ceiling import bayes_ceiling
+from due.sim.generator import generate_batch
 
 SEEDS = (42, 43, 44, 45, 46, 47, 48)
 

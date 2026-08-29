@@ -1,4 +1,4 @@
-"""Recoup — full system demo.
+"""Due — full system demo.
 
     python demo.py            # ~30s, everything below
     python demo.py --quick    # skip the sensitivity sweep
@@ -17,20 +17,20 @@ import sys
 import time
 from decimal import Decimal
 
-from recoup.core.diagnose import (
+from due.core.diagnose import (
     Diagnoser,
     HeuristicInferencer,
     MajorityClassInferencer,
     evaluate as evaluate_diagnosis,
 )
-from recoup.core.exceptions import ExceptionQueue
-from recoup.core.pipeline import RecoveryPipeline
-from recoup.core.models import GateVerdict
-from recoup.core.policy.engine import PolicyEngine
-from recoup.harness.counterfactual import CostModel, Counterfactual, render
-from recoup.harness.strategies import BlindRetry, GatedAgent, all_strategies
-from recoup.sim.ceiling import bayes_ceiling
-from recoup.sim.generator import generate_batch
+from due.core.exceptions import ExceptionQueue
+from due.core.pipeline import RecoveryPipeline
+from due.core.models import GateVerdict
+from due.core.policy.engine import PolicyEngine
+from due.harness.counterfactual import CostModel, Counterfactual, render
+from due.harness.strategies import BlindRetry, GatedAgent, all_strategies
+from due.sim.ceiling import bayes_ceiling
+from due.sim.generator import generate_batch
 
 W = 78
 _T0 = time.time()
@@ -56,7 +56,7 @@ def judge_mode(args) -> int:
     blind = next(r for r in results if r.name == "blind_retry")
     gated = next(r for r in results if r.name == "gated_agent")
 
-    print("\nRECOUP — Razorpay AI Buildathon, Track 03")
+    print("\nDUE — Razorpay AI Buildathon, Track 03")
     print(f"{len(world.events)} at-risk events, Rs {cf.amount_at_risk:,.0f} at stake\n")
     print(render(results))
 
@@ -122,7 +122,7 @@ def robustness_mode(args) -> int:
     lucky with one dataset?" — and it reports the worst case for us explicitly,
     because a robustness report that hides its own worst case isn't one.
     """
-    from recoup.harness.robustness import sweep
+    from due.harness.robustness import sweep
 
     n = args.seeds
     print(f"\nRunning {n} independent random worlds ({args.events} events each)...")
@@ -138,7 +138,7 @@ def robustness_mode(args) -> int:
 def stress_mode(args) -> int:
     """Two harder questions than random sampling can answer: does this hold at
     scale, and does it hold against a batch built to be hostile on purpose?"""
-    from recoup.harness.stress import (
+    from due.harness.stress import (
         adversarial_run,
         render_adversarial,
         render_scale,
@@ -180,7 +180,7 @@ def main() -> int:
     if args.judge:
         return judge_mode(args)
 
-    print("\nRECOUP — a policy-gated revenue recovery control plane")
+    print("\nDUE — a policy-gated revenue recovery control plane")
     print("Razorpay AI Buildathon, Track 03")
     print("\nEvery number below is produced by this run. Nothing is precomputed.")
 

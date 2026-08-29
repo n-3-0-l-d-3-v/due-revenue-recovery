@@ -13,10 +13,10 @@ from decimal import Decimal
 
 import pytest
 
-from recoup.harness.counterfactual import CostModel, Counterfactual
-from recoup.harness.sensitivity import across_seeds, sweep
-from recoup.harness.strategies import BlindRetry, FixedT3, GatedAgent
-from recoup.sim.generator import generate_batch
+from due.harness.counterfactual import CostModel, Counterfactual
+from due.harness.sensitivity import across_seeds, sweep
+from due.harness.strategies import BlindRetry, FixedT3, GatedAgent
+from due.sim.generator import generate_batch
 
 # Published prior ranges. A claim that survives only outside these is not a claim.
 CHURN_PER_CONTACT_RANGE = [0.0, 0.005, 0.010, 0.020, 0.050]

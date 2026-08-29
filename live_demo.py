@@ -21,11 +21,11 @@ import time
 from datetime import datetime
 from decimal import Decimal
 
-from recoup.core.actions import enumerate_actions
-from recoup.core.counters import AttemptCounter
-from recoup.core.diagnose import BatchContext, default_diagnoser
-from recoup.core.ledger import Ledger
-from recoup.core.models import (
+from due.core.actions import enumerate_actions
+from due.core.counters import AttemptCounter
+from due.core.diagnose import BatchContext, default_diagnoser
+from due.core.ledger import Ledger
+from due.core.models import (
     ActionType,
     DecisionRecord,
     EventType,
@@ -34,9 +34,9 @@ from recoup.core.models import (
     OutcomeStatus,
     RiskEvent,
 )
-from recoup.core.policy.engine import GateContext, PolicyEngine
-from recoup.core.scorer import Scorer
-from recoup.rzp.client import RazorpayClient, idempotency_reference
+from due.core.policy.engine import GateContext, PolicyEngine
+from due.core.scorer import Scorer
+from due.rzp.client import RazorpayClient, idempotency_reference
 
 W = 78
 

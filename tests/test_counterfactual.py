@@ -11,11 +11,11 @@ from decimal import Decimal
 
 import pytest
 
-from recoup.core.models import ActionType, RootCause
-from recoup.harness.counterfactual import Counterfactual
-from recoup.harness.strategies import BlindRetry, DoNothing, FixedT3, GatedAgent
-from recoup.sim.generator import generate_batch
-from recoup.sim.oracle import RecoveryOracle
+from due.core.models import ActionType, RootCause
+from due.harness.counterfactual import Counterfactual
+from due.harness.strategies import BlindRetry, DoNothing, FixedT3, GatedAgent
+from due.sim.generator import generate_batch
+from due.sim.oracle import RecoveryOracle
 
 
 @pytest.fixture(scope="module")
@@ -257,8 +257,8 @@ def test_every_action_the_system_chooses_is_measurable(world):
     This caught `winback_sequence` being emitted 45 times and chosen zero times,
     and `escalate_human` never being emitted at all.
     """
-    from recoup.core.pipeline import RecoveryPipeline
-    from recoup.sim.oracle import RecoveryOracle
+    from due.core.pipeline import RecoveryPipeline
+    from due.sim.oracle import RecoveryOracle
 
     pipeline = RecoveryPipeline()
     result = pipeline.run(world.events)
@@ -285,8 +285,8 @@ def test_every_action_the_system_chooses_is_measurable(world):
 def test_post_halted_playbook_actually_fires(world):
     """Razorpay's retries end at `halted`; this is the gap the project claims to
     fill. A claim that never executes is not a feature."""
-    from recoup.core.models import ActionType, EventType
-    from recoup.core.pipeline import RecoveryPipeline
+    from due.core.models import ActionType, EventType
+    from due.core.pipeline import RecoveryPipeline
 
     pipeline = RecoveryPipeline()
     result = pipeline.run(world.events)

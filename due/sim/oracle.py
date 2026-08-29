@@ -3,7 +3,7 @@
 EVALUATION-ONLY. Reads the latent world: the true root cause, the day the
 customer's balance actually recovers, whether they would ever respond to
 outreach, and whether the issuer was really down at that instant. Nothing under
-`recoup.core` may import this. If the production path could see it, every
+`due.core` may import this. If the production path could see it, every
 recovered rupee in the submission would be circular.
 
 **Determinism is the whole contract.** The same `(event, action, time)` query
@@ -24,9 +24,9 @@ import hashlib
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 
-from recoup.core.models import ActionType, RiskEvent, RootCause
-from recoup.sim import priors
-from recoup.sim.generator import SimWorld
+from due.core.models import ActionType, RiskEvent, RootCause
+from due.sim import priors
+from due.sim.generator import SimWorld
 
 _RETRY_ACTIONS = frozenset({ActionType.RETRY_NOW, ActionType.RETRY_SCHEDULED})
 _CONTACT_ACTIONS = frozenset(

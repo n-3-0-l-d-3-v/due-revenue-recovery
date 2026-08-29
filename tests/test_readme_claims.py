@@ -14,9 +14,9 @@ from pathlib import Path
 
 import pytest
 
-from recoup.harness.counterfactual import Counterfactual
-from recoup.harness.strategies import BlindRetry, FixedT3, GatedAgent
-from recoup.sim.generator import generate_batch
+from due.harness.counterfactual import Counterfactual
+from due.harness.strategies import BlindRetry, FixedT3, GatedAgent
+from due.sim.generator import generate_batch
 
 ROOT = Path(__file__).resolve().parents[1]
 README = (ROOT / "README.md").read_text(encoding="utf-8")

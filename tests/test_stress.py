@@ -8,8 +8,8 @@ merely randomly varied.
 
 from __future__ import annotations
 
-from recoup.harness.stress import adversarial_run, hostile_priors, scale_test
-from recoup.sim import priors
+from due.harness.stress import adversarial_run, hostile_priors, scale_test
+from due.sim import priors
 
 
 def test_zero_violations_holds_across_scale():
@@ -47,7 +47,7 @@ def test_priors_are_restored_even_if_the_run_raises():
         # an internal failure.
         import inspect
 
-        from recoup.harness.stress import adversarial_run as fn
+        from due.harness.stress import adversarial_run as fn
 
         source = inspect.getsource(fn)
         assert "finally:" in source, "restoration must be in a finally block"
@@ -60,7 +60,7 @@ def test_adversarial_batch_is_measurably_harder_than_baseline():
     """If the hostile batch isn't actually harder, it isn't an adversarial test —
     it's decoration. Confirm the pushed parameters really do bite: more outages,
     faster fatigue decay."""
-    from recoup.sim.generator import generate_batch
+    from due.sim.generator import generate_batch
 
     hostile = hostile_priors()
     baseline_outage_prob = priors.ISSUER_OUTAGE_DAY_PROB

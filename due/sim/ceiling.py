@@ -11,7 +11,7 @@ everything else is irreducible error, because the generic decline genuinely does
 not carry the information.
 
 This module is EVALUATION-ONLY. It reads the simulator's generative parameters,
-which no diagnoser may ever do. Importing it from `recoup.core` would make the
+which no diagnoser may ever do. Importing it from `due.core` would make the
 reported accuracy circular, so it lives in `sim/`.
 
 Knowing the ceiling changes decisions. If the headroom is four points, spending
@@ -23,9 +23,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from recoup.core.models import RootCause
-from recoup.sim import priors
-from recoup.sim.generator import SimWorld
+from due.core.models import RootCause
+from due.sim import priors
+from due.sim.generator import SimWorld
 
 
 @dataclass
@@ -109,7 +109,7 @@ def _posterior(
 
 
 def bayes_ceiling(world: SimWorld) -> CeilingReport:
-    from recoup.core.diagnose import AMBIGUOUS_REASONS
+    from due.core.diagnose import AMBIGUOUS_REASONS
 
     events = [e for e in world.events if e.error_reason in AMBIGUOUS_REASONS]
     if not events:

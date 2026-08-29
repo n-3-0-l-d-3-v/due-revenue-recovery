@@ -13,15 +13,15 @@ from decimal import Decimal
 
 import pytest
 
-from recoup.core.exceptions import (
+from due.core.exceptions import (
     HUMAN_REVIEW_COST,
     NO_VIABLE_ACTION_FLOOR,
     RESOLVABLE_BLOCKS,
     ExceptionQueue,
     ExceptionReason,
 )
-from recoup.core.pipeline import RecoveryPipeline
-from recoup.sim.generator import generate_batch
+from due.core.pipeline import RecoveryPipeline
+from due.sim.generator import generate_batch
 
 
 @pytest.fixture(scope="module")

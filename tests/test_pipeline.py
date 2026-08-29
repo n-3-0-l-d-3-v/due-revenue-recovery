@@ -12,10 +12,10 @@ from datetime import timedelta
 
 import pytest
 
-from recoup.core.models import ActionType, GateVerdict, RootCause, TERMINAL_FOR_RETRY
-from recoup.core.pipeline import RecoveryPipeline
-from recoup.core.policy.engine import UNGATED_ACTIONS, PolicyEngine
-from recoup.sim.generator import generate_batch
+from due.core.models import ActionType, GateVerdict, RootCause, TERMINAL_FOR_RETRY
+from due.core.pipeline import RecoveryPipeline
+from due.core.policy.engine import UNGATED_ACTIONS, PolicyEngine
+from due.sim.generator import generate_batch
 
 RETRY_ACTIONS = {ActionType.RETRY_NOW, ActionType.RETRY_SCHEDULED}
 

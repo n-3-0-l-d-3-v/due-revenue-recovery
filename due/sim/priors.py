@@ -15,7 +15,7 @@ from __future__ import annotations
 
 from decimal import Decimal
 
-from recoup.core.models import (
+from due.core.models import (
     ActionType,
     DeclineClass,
     Instrument,

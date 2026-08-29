@@ -12,8 +12,8 @@ from decimal import Decimal
 
 import pytest
 
-from recoup.core.ledger import GENESIS, Ledger
-from recoup.core.models import (
+from due.core.ledger import GENESIS, Ledger
+from due.core.models import (
     CandidateAction,
     DeclineClass,
     DecisionRecord,
@@ -66,7 +66,7 @@ def make_decision(i: int, blocked: bool = False) -> DecisionRecord:
                 rule_id="network.merchant_retry_cap",
                 verdict=GateVerdict.BLOCK if blocked else GateVerdict.PASS,
                 rationale="3/3 merchant-initiated retries" if blocked else "0/3 retries",
-                source="Recoup policy",
+                source="Due policy",
                 applies_to=ActionType.RETRY_SCHEDULED,
             )
         ],
