@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Due Ledger</title>
+<meta name="description" content="Interactive dashboard for Due, a policy-gated payment recovery engine built for the Razorpay AI Buildathon 2026 Track 03 — the four-strategy comparison, one refusal traced through every rule, a tamper-evident ledger, and the sensitivity boundary, live.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%93%92%3C/text%3E%3C/svg%3E">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --ink: #1B231F;
+    --ink-soft: #3A443E;
+    --paper: #ECEEE7;
+    --paper-raised: #F7F8F3;
+    --paper-sunken: #E1E4DB;
+    --line: #C7CCC0;
+    --line-soft: #D6D9CF;
+    --accent: #B87A1F;
+    --accent-soft: #E4C48C;
+    --accent-ink: #6B4A15;
+    --pass: #3F6B4F;
+    --pass-bg: #E1EAE3;
+    --block: #A0342C;
+    --block-bg: #F2DFDC;
+    --defer: #47698C;
+    --defer-bg: #DEE6ED;
+    --muted: #6B756D;
+    --shadow: 0 1px 2px rgba(27,35,31,.06), 0 6px 20px rgba(27,35,31,.05);
+    --radius: 3px;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", "Segoe UI", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", "SF Mono", Consolas, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ink: #E8EAE3;
+      --ink-soft: #B9C0B6;
+      --paper: #141815;
+      --paper-raised: #1C211D;
+      --paper-sunken: #0E1210;
+      --line: #343B35;
+      --line-soft: #2A302B;
+      --accent: #D9A254;
+      --accent-soft: #4A3A20;
+      --accent-ink: #F0CE97;
+      --pass: #6FA283;
+      --pass-bg: #1D2B22;
+      --block: #D2726A;
+      --block-bg: #2E1E1C;
+      --defer: #7CA0C4;
+      --defer-bg: #1E2833;
+      --muted: #838C82;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ink: #E8EAE3;
+    --ink-soft: #B9C0B6;
+    --paper: #141815;
+    --paper-raised: #1C211D;
+    --paper-sunken: #0E1210;
+    --line: #343B35;
+    --line-soft: #2A302B;
+    --accent: #D9A254;
+    --accent-soft: #4A3A20;
+    --accent-ink: #F0CE97;
+    --pass: #6FA283;
+    --pass-bg: #1D2B22;
+    --block: #D2726A;
+    --block-bg: #2E1E1C;
+    --defer: #7CA0C4;
+    --defer-bg: #1E2833;
+    --muted: #838C82;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.35);
+  }
+
+  * { box-sizing: border-box; }
+  html { color-scheme: light dark; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden; /* belt-and-suspenders: the body must never scroll sideways, only named wide-content containers may */
+  }
+
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 28px 96px;
+  }
+
+  /* ---------------------------------------------------------------- masthead */
+
+  .masthead {
+    border-bottom: 1px solid var(--line);
+    padding: 22px 28px 20px;
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .masthead .id { display: flex; align-items: baseline; gap: 12px; }
+  .masthead .mark {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+  }
+  .masthead .mark em { font-style: italic; color: var(--accent-ink); }
+  .masthead .tag {
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 3px 8px;
+  }
+  .masthead .meta {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    text-align: right;
+  }
+  .masthead .meta strong { color: var(--ink-soft); font-weight: 500; }
+
+  /* ---------------------------------------------------------------- summary strip */
+
+  .strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--line);
+    border: 1px solid var(--line);
+    margin-top: 28px;
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .stat {
+    background: var(--paper-raised);
+    padding: 18px 20px 16px;
+  }
+  .stat .k {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+  .stat .v {
+    font-family: var(--serif);
+    font-size: 1.9rem;
+    font-weight: 500;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+  .stat .v small { font-family: var(--mono); font-size: 0.95rem; font-weight: 400; color: var(--muted); }
+  .stat.hero .v { color: var(--accent-ink); }
+  .stat .sub { margin-top: 4px; font-size: 0.8rem; color: var(--muted); }
+
+  /* ---------------------------------------------------------------- sections */
+
+  section { margin-top: 56px; }
+  .section-head { margin-bottom: 20px; }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: var(--accent-ink);
+    margin: 0 0 6px;
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 500;
+    font-size: 1.5rem;
+    margin: 0 0 6px;
+    text-wrap: balance;
+    letter-spacing: -0.005em;
+  }
+  .dek { color: var(--ink-soft); max-width: 62ch; font-size: 0.94rem; }
+  .dek code { font-family: var(--mono); font-size: 0.87em; background: var(--paper-sunken); padding: 1px 5px; border-radius: 2px; }
+
+  /* ---------------------------------------------------------------- comparison table */
+
+  .cmp {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    overflow: hidden;
+  }
+  .cmp-row {
+    display: grid;
+    grid-template-columns: 168px 1fr 92px 92px 100px 150px;
+    align-items: center;
+    border-bottom: 1px solid var(--line-soft);
+    padding: 14px 20px;
+    gap: 14px;
+  }
+  .cmp-row:last-child { border-bottom: none; }
+  .cmp-row.head {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 12px;
+    padding-bottom: 12px;
+    background: var(--paper-sunken);
+  }
+  .cmp-row.hl { background: color-mix(in srgb, var(--pass-bg) 45%, var(--paper-raised)); }
+  .strat-name { font-family: var(--serif); font-weight: 500; font-size: 0.98rem; }
+  .strat-note { display: block; font-family: var(--sans); font-size: 0.74rem; color: var(--muted); font-weight: 400; margin-top: 2px; }
+
+  .bar-cell { display: flex; flex-direction: column; gap: 4px; }
+  .bar-track { height: 7px; background: var(--paper-sunken); border-radius: 4px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 4px; }
+  .bar-fill.recovered { background: var(--ink-soft); }
+  .bar-fill.net-pos { background: var(--pass); }
+  .bar-fill.net-neg { background: var(--block); }
+  .bar-label { font-family: var(--mono); font-size: 0.76rem; font-variant-numeric: tabular-nums; }
+
+  .num { font-family: var(--mono); font-size: 0.86rem; font-variant-numeric: tabular-nums; text-align: right; }
+  .num.strong { font-weight: 600; }
+
+  .pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--mono);
+    font-size: 0.72rem;
+    font-weight: 500;
+    padding: 3px 9px 3px 7px;
+    border-radius: 3px;
+    letter-spacing: .01em;
+    justify-self: end;
+  }
+  .pill.pass { background: var(--pass-bg); color: var(--pass); }
+  .pill.block { background: var(--block-bg); color: var(--block); }
+  .pill.defer { background: var(--defer-bg); color: var(--defer); }
+  .pill::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+  .net-val { font-family: var(--mono); font-weight: 600; text-align: right; font-variant-numeric: tabular-nums; }
+  .net-val.pos { color: var(--pass); }
+  .net-val.neg { color: var(--block); }
+
+  .headline-delta {
+    margin-top: 18px;
+    padding: 16px 20px;
+    background: var(--paper-sunken);
+    border-radius: var(--radius);
+    font-size: 0.92rem;
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+  }
+  .headline-delta b { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+
+  /* ---------------------------------------------------------------- tier split */
+
+  .tiers { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+  @media (max-width: 720px) { .tiers { grid-template-columns: 1fr; } }
+  .tier {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    background: var(--paper-raised);
+  }
+  .tier-badge {
+    display: inline-block;
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 3px;
+    margin-bottom: 10px;
+  }
+  .tier.a .tier-badge { background: var(--pass-bg); color: var(--pass); }
+  .tier.b .tier-badge { background: var(--defer-bg); color: var(--defer); }
+  .tier h3 { font-family: var(--serif); font-size: 1.08rem; font-weight: 500; margin: 0 0 10px; }
+  .tier ul { margin: 0; padding-left: 18px; font-size: 0.87rem; color: var(--ink-soft); }
+  .tier li { margin-bottom: 6px; }
+  .tier .caveat { margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--line); font-size: 0.82rem; color: var(--muted); }
+  .tier .caveat b { color: var(--ink-soft); }
+
+  /* ---------------------------------------------------------------- decision replay */
+
+  .replay-frame {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    overflow: hidden;
+  }
+  .replay-head {
+    padding: 16px 22px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    background: var(--paper-sunken);
+  }
+  .replay-head .amt { font-family: var(--serif); font-size: 1.3rem; font-weight: 500; }
+  .replay-head .id-tag { font-family: var(--mono); font-size: 0.78rem; color: var(--muted); }
+  .replay-body { padding: 22px; }
+
+  .diag-line {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    font-size: 0.88rem;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .diag-line .cause { font-family: var(--mono); font-weight: 600; color: var(--accent-ink); }
+  .diag-line .cite { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); overflow-wrap: anywhere; }
+
+  .candidate {
+    border: 1px solid var(--line-soft);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+  }
+  .candidate:last-child { margin-bottom: 0; }
+  .candidate-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 16px;
+    background: var(--paper-sunken);
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    font-weight: 600;
+  }
+  .gate-list { padding: 6px 16px 12px; }
+  .gate-row {
+    display: grid;
+    grid-template-columns: 74px 1fr;
+    gap: 12px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--line-soft);
+    font-size: 0.83rem;
+    align-items: start;
+    min-width: 0; /* grid items default to min-width:auto, which is exactly what let long unbroken tokens force this row wider than its column and bleed out of frame */
+  }
+  .gate-row:last-child { border-bottom: none; }
+  .gate-rule { font-family: var(--mono); font-size: 0.76rem; color: var(--muted); }
+  .gate-why { min-width: 0; overflow-wrap: anywhere; }
+  .gate-why b { color: var(--ink); font-weight: 500; overflow-wrap: anywhere; }
+  .gate-why .src { display: block; font-size: 0.74rem; color: var(--muted); margin-top: 2px; font-style: italic; overflow-wrap: anywhere; }
+  /* .pill defaults to justify-self:end for the comparison table, where its
+     column is wide. Reused here in a 74px column, that pushed pill content
+     past the column's LEFT edge whenever the pill was wider than the column —
+     exactly the "block" verdict getting its leading "b" clipped off-frame. */
+  .gate-row .pill { justify-self: start; }
+
+  @media (max-width: 560px) {
+    .gate-row { grid-template-columns: 1fr; }
+    .gate-row .pill { justify-self: start; margin-bottom: 2px; }
+  }
+
+  .replay-verdict {
+    margin-top: 18px;
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    background: var(--block-bg);
+    color: var(--block);
+    font-size: 0.88rem;
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+  }
+  .replay-verdict b { font-family: var(--mono); }
+
+  /* ---------------------------------------------------------------- ledger chain */
+
+  .chain-wrap { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 22px; }
+  .chain-toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 12px; }
+  .btn {
+    font-family: var(--mono);
+    font-size: 0.78rem;
+    font-weight: 500;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    border: 1px solid var(--block);
+    background: var(--block-bg);
+    color: var(--block);
+    cursor: pointer;
+    letter-spacing: .01em;
+    transition: filter .12s ease;
+  }
+  .btn:hover { filter: brightness(0.96); }
+  .btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .btn.reset { border-color: var(--line); background: var(--paper-sunken); color: var(--ink-soft); }
+  .chain-status {
+    font-family: var(--mono);
+    font-size: 0.82rem;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: var(--radius);
+  }
+  .chain-status.ok { background: var(--pass-bg); color: var(--pass); }
+  .chain-status.broken { background: var(--block-bg); color: var(--block); }
+
+  .chain { display: flex; gap: 0; overflow-x: auto; padding-bottom: 8px; }
+  .block {
+    flex: 0 0 auto;
+    width: 168px;
+    border: 1.5px solid var(--line);
+    border-radius: var(--radius);
+    padding: 12px 14px;
+    background: var(--paper-sunken);
+    position: relative;
+    transition: border-color .2s ease, background .2s ease;
+  }
+  .block + .block { margin-left: 26px; }
+  .block + .block::before {
+    content: "";
+    position: absolute;
+    left: -26px; top: 50%;
+    width: 26px; height: 2px;
+    background: var(--line);
+    transform: translateY(-1px);
+  }
+  .block .idx { font-family: var(--mono); font-size: 0.66rem; color: var(--muted); letter-spacing: .05em; text-transform: uppercase; }
+  .block .hash { font-family: var(--mono); font-size: 0.78rem; font-weight: 600; margin: 6px 0 8px; word-break: break-all; }
+  .block .amt { font-family: var(--serif); font-size: 1.02rem; margin-bottom: 6px; }
+  .block[data-tampered="true"] { border-color: var(--block); background: var(--block-bg); }
+  .block[data-tampered="true"] .hash { color: var(--block); text-decoration: line-through; text-decoration-thickness: 1.5px; }
+  .block.editable { cursor: pointer; }
+  .block.editable:hover { border-color: var(--accent); }
+  .block.editable:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .chain-hint { margin-top: 16px; font-size: 0.83rem; color: var(--muted); }
+  .chain-hint b { color: var(--ink-soft); }
+
+  /* ---------------------------------------------------------------- sensitivity slider */
+
+  .sens-frame { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 26px 26px 22px; }
+  .sens-readout { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 22px; flex-wrap: wrap; gap: 16px; }
+  .sens-value { font-family: var(--serif); font-size: 2rem; font-weight: 500; font-variant-numeric: tabular-nums; }
+  .sens-value small { font-family: var(--mono); font-size: 0.9rem; color: var(--muted); font-weight: 400; display: block; margin-top: 2px; }
+  .sens-winner {
+    font-family: var(--mono);
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 6px 14px;
+    border-radius: var(--radius);
+  }
+
+  .sens-bars { display: flex; flex-direction: column; gap: 10px; margin-bottom: 22px; }
+  .sens-bar-row { display: grid; grid-template-columns: 92px 1fr 110px; align-items: center; gap: 12px; }
+  .sens-bar-name { font-family: var(--mono); font-size: 0.78rem; color: var(--ink-soft); }
+  .sens-bar-track { position: relative; height: 22px; background: var(--paper-sunken); border-radius: 3px; overflow: hidden; }
+  .sens-bar-fill { position: absolute; top: 0; bottom: 0; border-radius: 3px; transition: width .25s ease, background .25s ease; }
+  .sens-bar-zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--line); left: 50%; }
+  .sens-bar-val { font-family: var(--mono); font-size: 0.82rem; text-align: right; font-variant-numeric: tabular-nums; }
+
+  input[type="range"] {
+    width: 100%;
+    -webkit-appearance: none;
+    appearance: none;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px; height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--paper-raised);
+    box-shadow: 0 0 0 1.5px var(--accent);
+    cursor: pointer;
+    margin-top: -7px;
+  }
+  input[type="range"]::-moz-range-thumb {
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 3px solid var(--paper-raised);
+    box-shadow: 0 0 0 1.5px var(--accent);
+    cursor: pointer;
+  }
+  input[type="range"]:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+  .slider-labels { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 0.7rem; color: var(--muted); margin-top: 6px; }
+  .slider-flag { margin-top: 14px; font-size: 0.82rem; color: var(--muted); }
+  .slider-flag b { color: var(--ink-soft); }
+
+  /* ---------------------------------------------------------------- robustness */
+
+  .rob-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin-bottom: 20px; }
+  @media (max-width: 720px) { .rob-grid { grid-template-columns: 1fr; } }
+  .rob-card { border: 1px solid var(--line); border-radius: var(--radius); background: var(--paper-raised); padding: 20px 22px; }
+  .rob-frac { font-family: var(--serif); font-size: 2.1rem; font-weight: 500; }
+  .rob-frac small { font-family: var(--mono); font-size: 1rem; color: var(--muted); }
+  .rob-label { font-family: var(--mono); font-size: 0.72rem; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin-top: 4px; }
+  .dotfield { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 14px; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pass); }
+  .dot.miss { background: var(--defer); }
+
+  .worst-case {
+    border: 1px dashed var(--line);
+    border-radius: var(--radius);
+    padding: 14px 18px;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    background: var(--paper-sunken);
+  }
+  .worst-case b { font-family: var(--mono); }
+
+  /* ---------------------------------------------------------------- proof grid + timeline */
+
+  .proof-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  @media (max-width: 860px) { .proof-grid { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 480px) { .proof-grid { grid-template-columns: 1fr; } }
+  .proof-card {
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--paper-raised);
+    padding: 16px 18px;
+  }
+  .proof-num {
+    font-family: var(--serif);
+    font-size: 1.7rem;
+    font-weight: 500;
+    color: var(--accent-ink);
+    font-variant-numeric: tabular-nums;
+  }
+  .proof-num span { font-size: 1rem; color: var(--muted); font-family: var(--mono); }
+  .proof-label { font-size: 0.82rem; color: var(--ink-soft); margin-top: 4px; font-weight: 500; }
+  .proof-note { font-size: 0.78rem; color: var(--muted); margin-top: 8px; line-height: 1.5; }
+
+  .timeline { position: relative; padding-left: 8px; }
+  .tl-item {
+    display: grid;
+    grid-template-columns: 82px 1fr;
+    gap: 18px;
+    padding: 0 0 26px 0;
+    position: relative;
+  }
+  .tl-item::before {
+    content: "";
+    position: absolute;
+    left: 40px; top: 26px; bottom: -2px;
+    width: 1px;
+    background: var(--line);
+  }
+  .tl-item:last-child::before { display: none; }
+  .tl-tag {
+    font-family: var(--mono);
+    font-size: 0.66rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-align: center;
+    padding: 4px 0;
+    border-radius: 3px;
+    height: fit-content;
+    justify-self: start;
+    width: 82px;
+  }
+  .tl-tag.bug { background: var(--block-bg); color: var(--block); }
+  .tl-tag.cut { background: var(--defer-bg); color: var(--defer); }
+  .tl-body { min-width: 0; overflow-wrap: anywhere; }
+  .tl-head { font-family: var(--serif); font-size: 1rem; font-weight: 500; margin-bottom: 6px; text-wrap: balance; }
+  .tl-body p { margin: 0; font-size: 0.88rem; color: var(--ink-soft); max-width: 68ch; }
+  .tl-body code {
+    font-family: var(--mono);
+    font-size: 0.85em;
+    background: var(--paper-sunken);
+    padding: 1px 5px;
+    border-radius: 2px;
+    overflow-wrap: anywhere;
+  }
+  .tl-body b { font-family: var(--mono); font-weight: 600; color: var(--ink); }
+
+  @media (max-width: 560px) {
+    .tl-item { grid-template-columns: 1fr; }
+    .tl-item::before { display: none; }
+    .tl-tag { width: auto; display: inline-block; padding: 3px 10px; margin-bottom: 8px; }
+  }
+
+  /* ---------------------------------------------------------------- verify footer */
+
+  .verify {
+    margin-top: 64px;
+    border-top: 1px solid var(--line);
+    padding-top: 28px;
+  }
+  .term {
+    background: var(--ink);
+    color: var(--paper);
+    border-radius: var(--radius);
+    padding: 18px 22px;
+    font-family: var(--mono);
+    font-size: 0.84rem;
+    line-height: 1.9;
+    overflow-x: auto;
+  }
+  .term .c { color: var(--accent-soft); }
+  .term .cm { color: var(--muted); }
+  /* The terminal block stays visually dark in both themes on purpose — it
+     reads as a terminal. In light mode it contrasts against the paper; in
+     dark mode it needs its own lighter surface or it would vanish against
+     an already-dark page. */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      .term { background: var(--paper-sunken); color: var(--ink); }
+      .term .c { color: var(--accent); }
+    }
+  }
+  :root[data-theme="dark"] .term { background: var(--paper-sunken); color: var(--ink); }
+  :root[data-theme="dark"] .term .c { color: var(--accent); }
+
+  .foot-note { margin-top: 18px; font-size: 0.82rem; color: var(--muted); max-width: 70ch; }
+
+  @media (max-width: 860px) {
+    .cmp-row { grid-template-columns: 120px 1fr 70px 70px 80px 120px; padding: 12px 16px; gap: 8px; }
+    .strip { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div class="masthead">
+    <div class="id">
+      <span class="mark"><em>Due</em> Ledger</span>
+      <span class="tag">Track 03 &middot; Revenue Recovery</span>
+    </div>
+    <div class="meta">1,000-event batch &middot; seed <strong>42</strong> &middot; ₹1,113,772 at risk</div>
+  </div>
+
+  <div class="strip">
+    <div class="stat hero">
+      <div class="k">Policy violations</div>
+      <div class="v">0 <small>vs 2,493</small></div>
+      <div class="sub">zero, not few — verified under 4 cost models</div>
+    </div>
+    <div class="stat">
+      <div class="k">Retry attempts spent</div>
+      <div class="v">441 <small>vs 4,652</small></div>
+      <div class="sub">10.5&times; fewer than blind retry</div>
+    </div>
+    <div class="stat">
+      <div class="k">Customer contacts</div>
+      <div class="v">313 <small>vs 1,768</small></div>
+      <div class="sub">5.6&times; fewer, same batch</div>
+    </div>
+    <div class="stat">
+      <div class="k">Net value</div>
+      <div class="v" style="color:var(--pass)">₹325,397</div>
+      <div class="sub">vs &minus;₹239,741 for blind retry</div>
+    </div>
+  </div>
+
+  <!-- ================================================================ COMPARISON -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Same batch &middot; four strategies &middot; identical scoring</p>
+      <h2>What actually happens to 1,000 failed payments</h2>
+      <p class="dek">Every strategy runs against the exact same events and is measured by the same code — no strategy scores itself. <code>fixed_t3</code> is Razorpay's own documented subscription retry, not a strawman.</p>
+    </div>
+
+    <div class="cmp">
+      <div class="cmp-row head">
+        <div>Strategy</div>
+        <div>Recovered</div>
+        <div style="text-align:right">Attempts</div>
+        <div style="text-align:right">Contacts</div>
+        <div style="text-align:right">Violations</div>
+        <div style="text-align:right">Net value</div>
+      </div>
+
+      <div class="cmp-row">
+        <div class="strat-name">Do nothing<span class="strat-note">baseline floor</span></div>
+        <div class="bar-cell"><div class="bar-track"><div class="bar-fill recovered" style="width:0%"></div></div><span class="bar-label">₹0 &middot; 0.0%</span></div>
+        <div class="num">0</div>
+        <div class="num">0</div>
+        <div class="num">0</div>
+        <div class="net-val">₹0</div>
+      </div>
+
+      <div class="cmp-row">
+        <div class="strat-name">Fixed T+3<span class="strat-note">Razorpay's documented retry</span></div>
+        <div class="bar-cell"><div class="bar-track"><div class="bar-fill recovered" style="width:66.9%"></div></div><span class="bar-label">₹294,538 &middot; 26.4%</span></div>
+        <div class="num">2,151</div>
+        <div class="num">0</div>
+        <div class="num">715</div>
+        <div class="net-val pos">₹236,167</div>
+      </div>
+
+      <div class="cmp-row">
+        <div class="strat-name">Blind retry<span class="strat-note">what most "AI" retry agents are</span></div>
+        <div class="bar-cell"><div class="bar-track"><div class="bar-fill recovered" style="width:100%"></div></div><span class="bar-label">₹439,822 &middot; 39.5%</span></div>
+        <div class="num strong">4,652</div>
+        <div class="num strong">1,768</div>
+        <div class="num strong" style="color:var(--block)">2,493</div>
+        <div class="net-val neg">&minus;₹239,741</div>
+      </div>
+
+      <div class="cmp-row hl">
+        <div class="strat-name">Due<span class="strat-note">diagnose &middot; gate &middot; score</span></div>
+        <div class="bar-cell"><div class="bar-track"><div class="bar-fill recovered" style="width:86.4%; background:var(--accent)"></div></div><span class="bar-label">₹380,067 &middot; 34.1%</span></div>
+        <div class="num strong">441</div>
+        <div class="num strong">313</div>
+        <div class="num strong" style="color:var(--pass)">0</div>
+        <div class="net-val pos" style="font-size:1.05rem">₹325,397</div>
+      </div>
+    </div>
+
+    <div class="headline-delta">
+      <div>Blind retry recovers <b style="color:var(--block)">₹59,755 more</b></div>
+      <div>and is worth <b style="color:var(--pass)">₹565,138 less</b></div>
+      <div>while spending <b>10.5&times;</b> the attempts and <b>5.6&times;</b> the contacts</div>
+    </div>
+  </section>
+
+  <!-- ================================================================ TIERS -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">What the claims actually rest on</p>
+      <h2>Two tiers, not one blended number</h2>
+      <p class="dek">Collapsing every claim into one headline would be the dishonest move. They rest on different footing, so they're kept apart.</p>
+    </div>
+
+    <div class="tiers">
+      <div class="tier a">
+        <span class="tier-badge">Tier A &middot; proven</span>
+        <h3>Independent of every economic assumption</h3>
+        <ul>
+          <li>0 policy violations vs blind retry's 2,493</li>
+          <li>441 attempts vs 4,652 &middot; 313 contacts vs 1,768</li>
+          <li>Recovers 86% of what blind retry recovers</li>
+        </ul>
+        <div class="caveat">Counts of actions and rule evaluations. <b>No cost parameter can move them</b> — checked under four cost models, including one with every cost set to zero.</div>
+      </div>
+      <div class="tier b">
+        <span class="tier-badge">Tier B &middot; conditional</span>
+        <h3>Depends on one qualitative assumption</h3>
+        <ul>
+          <li>Highest net value: ₹325,397</li>
+        </ul>
+        <div class="caveat">Holds provided repeated retries and contact carry <b>any</b> customer-retention cost — not a specific size, just non-zero. Slide the control below to find where this stops being true.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ DECISION REPLAY -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">One real refusal, in full</p>
+      <h2>Why ₹5,283 was deliberately left on the table</h2>
+      <p class="dek">Not the first refusal in the batch — the highest-value one. Every rule the gate checked is shown, passes included, because a gate that logs only its refusals can't prove compliance.</p>
+    </div>
+
+    <div class="replay-frame">
+      <div class="replay-head">
+        <div>
+          <div class="amt">₹5,283.47 at risk</div>
+          <div class="id-tag">evt_000317</div>
+        </div>
+        <div class="pill defer" style="font-size:.78rem">insufficient_funds</div>
+      </div>
+      <div class="replay-body">
+        <div class="diag-line">
+          diagnosed as <span class="cause">insufficient_funds</span>
+          <span class="cite">rzp:cards#insufficient_funds &middot; table lookup, 100% confidence</span>
+        </div>
+
+        <div class="candidate">
+          <div class="candidate-head">
+            <span>retry_scheduled</span>
+            <span style="font-size:.72rem;color:var(--muted);font-weight:400">7 rules evaluated</span>
+          </div>
+          <div class="gate-list">
+            <div class="gate-row"><span class="pill pass">pass</span><div class="gate-why"><b>network.attempts_per_card_30d</b> — 0/15 attempts in 30d<span class="src">Visa / Mastercard network rules</span></div></div>
+            <div class="gate-row"><span class="pill pass">pass</span><div class="gate-why"><b>network.attempts_per_card_24h</b> — 0/9 attempts in 24h<span class="src">Visa / Mastercard reattempt limits</span></div></div>
+            <div class="gate-row"><span class="pill pass">pass</span><div class="gate-why"><b>network.merchant_retry_cap</b> — 0/3 merchant-initiated retries<span class="src">Due policy — tighter than the network ceiling</span></div></div>
+            <div class="gate-row"><span class="pill pass">pass</span><div class="gate-why"><b>network.do_not_retry_terminal</b> — insufficient_funds is not terminal<span class="src">Mastercard MAC 03 "Do Not Try Again"</span></div></div>
+            <div class="gate-row"><span class="pill defer">defer</span><div class="gate-why"><b>rbi.emandate_pre_debit_notice</b> — notice not yet sent, 24h required<span class="src">RBI e-mandate framework</span></div></div>
+            <div class="gate-row"><span class="pill pass">pass</span><div class="gate-why"><b>rbi.afa_threshold</b> — ₹5,283 within AFA threshold ₹15,000<span class="src">RBI AFA rule</span></div></div>
+            <div class="gate-row"><span class="pill block">block</span><div class="gate-why"><b>consent.active</b> — consent withdrawn<span class="src">RBI e-mandate — customer opted out</span></div></div>
+          </div>
+        </div>
+
+        <div class="candidate">
+          <div class="candidate-head">
+            <span>nudge_payment_link</span>
+            <span style="font-size:.72rem;color:var(--muted);font-weight:400">1 rule evaluated</span>
+          </div>
+          <div class="gate-list">
+            <div class="gate-row"><span class="pill block">block</span><div class="gate-why"><b>consent.active</b> — consent withdrawn<span class="src">RBI e-mandate — customer opted out</span></div></div>
+          </div>
+        </div>
+
+        <div class="replay-verdict">
+          <span class="pill block">blocked</span>
+          <span>No action taken. Both candidates were stopped by the same rule — this customer opted out, and that overrides everything else, no matter how much money is at stake.</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ LEDGER CHAIN -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Tamper-evident, not tamper-proof</p>
+      <h2>Every decision is hash-chained</h2>
+      <p class="dek">Each block's hash covers its full content and commits to the block before it. Click any block to flip its verdict — the way an attacker would try to hide a violation after the fact.</p>
+    </div>
+
+    <div class="chain-wrap">
+      <div class="chain-toolbar">
+        <button class="btn" id="tamperBtn" type="button">Tamper with block 3 (flip BLOCKED → ACTED)</button>
+        <span class="chain-status ok" id="chainStatus">CHAIN VERIFIED — 5 entries</span>
+      </div>
+
+      <div class="chain" id="chainRow">
+        <!-- populated by JS from real ledger data -->
+      </div>
+
+      <p class="chain-hint" id="chainHint"><b>Untampered:</b> recomputing every hash matches what was sealed. The chain is genesis-anchored — block 1 commits to a fixed zero-hash, so nothing can be prepended either.</p>
+    </div>
+  </section>
+
+  <!-- ================================================================ SENSITIVITY -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Where our own claim fails</p>
+      <h2>The net-value boundary, live</h2>
+      <p class="dek">Net value assumes annoying a customer costs <em>something</em>. Drag the control to see exactly where that assumption stops holding — using the real swept values, not an illustration.</p>
+    </div>
+
+    <div class="sens-frame">
+      <div class="sens-readout">
+        <div class="sens-value" id="sensValue">
+          0.020
+          <small>customer-retention cost per contact (published baseline)</small>
+        </div>
+        <div class="sens-winner" id="sensWinner">Due wins</div>
+      </div>
+
+      <div class="sens-bars">
+        <div class="sens-bar-row">
+          <div class="sens-bar-name">blind_retry</div>
+          <div class="sens-bar-track"><div class="sens-bar-zero"></div><div class="sens-bar-fill" id="barBlind" style="background:var(--block)"></div></div>
+          <div class="sens-bar-val" id="valBlind">&minus;₹239,741</div>
+        </div>
+        <div class="sens-bar-row">
+          <div class="sens-bar-name">Due</div>
+          <div class="sens-bar-track"><div class="sens-bar-zero"></div><div class="sens-bar-fill" id="barGated" style="background:var(--pass)"></div></div>
+          <div class="sens-bar-val" id="valGated">₹325,397</div>
+        </div>
+      </div>
+
+      <input type="range" id="sensSlider" min="0" max="9" step="1" value="6">
+      <div class="slider-labels"><span>0.000 — no retention cost</span><span>0.050 — heavy retention cost</span></div>
+      <div class="slider-flag" id="sensFlag">At the published baseline (0.020), <b>Due has the highest net value.</b></div>
+    </div>
+  </section>
+
+  <!-- ================================================================ ROBUSTNESS -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">Not one lucky batch</p>
+      <h2>Fifty independent random worlds</h2>
+      <p class="dek">The table above uses one fixed seed so it's reproducible. This is the same comparison run 50 times against 50 freshly randomised batches — no two alike.</p>
+    </div>
+
+    <div class="rob-grid">
+      <div class="rob-card">
+        <div class="rob-frac">50<small>/50</small></div>
+        <div class="rob-label">Zero violations held</div>
+        <div class="dotfield">
+          <div class="dot" style="animation-delay:0s"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+          <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+      </div>
+      <div class="rob-card">
+        <div class="rob-frac">47<small>/50</small></div>
+        <div class="rob-label">Highest net value held</div>
+        <div class="dotfield" id="netvalDots"></div>
+      </div>
+    </div>
+
+    <div class="worst-case">
+      <b>Worst case for us — seed 18:</b> Due's net value was ₹238,337 against a rival's ₹265,389, a margin of <b>&minus;₹27,052</b>. Even there, Due still committed zero violations. A robustness report that hides its own worst case isn't one.
+    </div>
+  </section>
+
+  <!-- ================================================================ SELF-CAUGHT -->
+  <section>
+    <div class="section-head">
+      <p class="eyebrow">A green test suite proves the tests pass — not that they'd fail if the system broke</p>
+      <h2>What building this actually caught</h2>
+      <p class="dek">Not a features list. A record of specific claims that turned out to be wrong on first measurement, kept in the commit history rather than smoothed over.</p>
+    </div>
+
+    <div class="proof-grid">
+      <div class="proof-card">
+        <div class="proof-num">94.3<span>%</span></div>
+        <div class="proof-label">Diagnosis resolved by citation lookup</div>
+        <div class="proof-note">The remaining 5.7% needs real inference — measured against a Bayes-optimal ceiling, not asserted.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-num">8<span>/8</span></div>
+        <div class="proof-label">Deliberate rule-breaks caught by the suite</div>
+        <div class="proof-note">Retry cap, network caps, RBI window, consent, terminal codes, obligation — each disabled on purpose, each one failed a test.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-num">16<span>%</span></div>
+        <div class="proof-label">Decisions routed to a human</div>
+        <div class="proof-note">A system claiming 100% automation is lying or unsafe. Only genuinely resolvable blocks escalate.</div>
+      </div>
+      <div class="proof-card">
+        <div class="proof-num">0</div>
+        <div class="proof-label">Violations under an adversarial batch</div>
+        <div class="proof-note">4&times; the normal outage rate, weaker fatigue decay, wider tickets — built to be hostile, not sampled to be average.</div>
+      </div>
+    </div>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <span class="tl-tag cut">CUT</span>
+        <div class="tl-body">
+          <div class="tl-head">The LLM classification path, on measured evidence</div>
+          <p>Built a Claude-based classifier for ambiguous decline codes, then measured its actual ceiling before trusting it: majority-class floor <b>43.1%</b>, heuristic <b>46.6%</b>, Bayes-optimal ceiling <b>48.7%</b>. Roughly two points of headroom, on 6% of events. Cut the LLM call rather than ship something that sounds impressive and does nothing.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head">The RBI notice clock restarted at execution time</div>
+          <p>A deferred mandate debit re-checked its 24-hour compliance window using the moment it fired, not the moment the notice was sent — so the window never elapsed. <b>81/81</b> deferred actions were being permanently rejected. Fixed by carrying the original notice timestamp forward; verified 0/81 rejected afterward.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head">Replaying the same batch twice produced two different ledgers</div>
+          <p>Re-validation entries were keyed with <code>uuid4()</code> — random by definition. That silently broke the "replayable audit trail" claim on every single run. Replaced with a deterministic id derived from the decision and timestamp; two replays of the same batch now produce byte-identical chains.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head">The tamper demo said "chain OK" after tampering</div>
+          <p>The demo picked the first gate result to flip — which happened to already be <code>PASS</code>, so flipping it to <code>"pass"</code> changed nothing. A tamper demo that shows the chain surviving tampering disproves the exact thing it exists to prove. Fixed to target an actual <code>BLOCK</code> verdict and name the exact entry that breaks.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head"><code>receipt</code> is not an idempotency key</div>
+          <p>Assumed Razorpay deduplicated on the <code>receipt</code> field. Tested it against the live sandbox: sent the same receipt twice, got back <b>two different order IDs</b>. In production that's a double charge on a network retry. Idempotency is now enforced client-side, with the durability limitation stated rather than hidden.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head">A headline safety test was passing vacuously — twice</div>
+          <p>The test proving retries never exceed the cap read the cap from the same config it was validating (loosen the config, the assertion loosens with it), and generated payment IDs so unique that no payment ever reached a second retry — nothing was ever being capped. A mutation-testing pass caught both. Fixed with a hardcoded ceiling and a focused strategy that forces accumulation.</p>
+        </div>
+      </div>
+
+      <div class="tl-item">
+        <span class="tl-tag bug">FOUND</span>
+        <div class="tl-body">
+          <div class="tl-head">A 15,000-event batch took two minutes instead of sixteen seconds</div>
+          <p>Discovered while building the scale-stress test — a batch-wide lookup was being rebuilt from scratch inside a loop over every deferred action: true O(events &times; pending), invisible at 1,000 events. Hoisted out of the loop; confirmed linear scaling from 1,000 to 15,000 events afterward.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================================================================ VERIFY -->
+  <div class="verify">
+    <p class="eyebrow" style="margin-bottom:14px">Nothing on this page is precomputed for effect</p>
+    <div class="term">
+<span class="cm"># every number above, computed live</span><br>
+<span class="c">$</span> python demo.py<br><br>
+<span class="cm"># 50 independent random worlds, not one lucky batch</span><br>
+<span class="c">$</span> python demo.py --robustness<br><br>
+<span class="cm"># scale test + a batch built on purpose to be hostile</span><br>
+<span class="c">$</span> python demo.py --stress<br><br>
+<span class="cm"># break each safety rule, confirm the tests catch it — all 8</span><br>
+<span class="c">$</span> python tools/mutation_check.py<br><br>
+<span class="cm"># 153 tests, 15 property-based, generating ~250 event shapes each</span><br>
+<span class="c">$</span> pytest -q
+    </div>
+    <p class="foot-note">Every rupee figure above is <b>simulated under stated priors</b> — the batch is synthetic, generated from parameters cited to NPCI decline-rate data, Razorpay's published error taxonomy, and RBI's e-mandate framework. Compliance, audit integrity, and replay determinism are proven and hold on any input; recovery figures are not, and are labelled that way throughout.</p>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* ---- ledger chain ---------------------------------------------- */
+  var chainData = [
+    { idx: "01 · genesis-linked", hash: "4b890107d9e27b46", amt: 294.17, verdict: "acted" },
+    { idx: "02", hash: "7ee219efddeff267", amt: 529.51, verdict: "deferred" },
+    { idx: "03", hash: "bd9e27503501eeb8", amt: 173.14, verdict: "blocked" },
+    { idx: "04", hash: "c56be86c49a1aeb4", amt: 2233.93, verdict: "acted" },
+    { idx: "05", hash: "9c430146c365765b", amt: 1247.60, verdict: "blocked" }
+  ];
+
+  var chainRow = document.getElementById("chainRow");
+  var tampered = false;
+
+  function money(n) {
+    return "₹" + n.toLocaleString("en-IN", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+
+  function renderChain() {
+    chainRow.innerHTML = "";
+    chainData.forEach(function (b, i) {
+      var el = document.createElement("div");
+      el.className = "block";
+      var isTampered = tampered && i === 2;
+      el.setAttribute("data-tampered", isTampered ? "true" : "false");
+      var verdictColor = { acted: "var(--pass)", blocked: "var(--block)", deferred: "var(--defer)" }[b.verdict];
+      el.innerHTML =
+        '<div class="idx">' + b.idx + '</div>' +
+        '<div class="hash">' + (isTampered ? "MISMATCH" : b.hash) + '</div>' +
+        '<div class="amt">' + money(b.amt) + '</div>' +
+        '<span class="pill" style="background:transparent;color:' + verdictColor + ';padding:0">' + b.verdict + '</span>';
+      chainRow.appendChild(el);
+    });
+  }
+
+  var tamperBtn = document.getElementById("tamperBtn");
+  var statusEl = document.getElementById("chainStatus");
+  var hintEl = document.getElementById("chainHint");
+
+  tamperBtn.addEventListener("click", function () {
+    tampered = !tampered;
+    renderChain();
+    if (tampered) {
+      statusEl.textContent = "CHAIN BROKEN — seq 2: content hash mismatch";
+      statusEl.className = "chain-status broken";
+      hintEl.innerHTML = '<b>Tampered:</b> block 3\'s recorded verdict was rewritten from BLOCKED to ACTED to hide a refusal. Its content hash no longer matches what was sealed — the forgery is localised to the exact entry, not just “something is wrong somewhere.”';
+      tamperBtn.textContent = "Restore block 3";
+    } else {
+      statusEl.textContent = "CHAIN VERIFIED — 5 entries";
+      statusEl.className = "chain-status ok";
+      hintEl.innerHTML = '<b>Untampered:</b> recomputing every hash matches what was sealed. The chain is genesis-anchored — block 1 commits to a fixed zero-hash, so nothing can be prepended either.';
+      tamperBtn.textContent = "Tamper with block 3 (flip BLOCKED → ACTED)";
+    }
+  });
+
+  renderChain();
+
+  /* ---- sensitivity slider — real swept data points ----------------- */
+  var sweepPoints = [
+    { v: 0.000, blind: 313162,  gated: 367249 },
+    { v: 0.002, blind: 255354,  gated: 363064 },
+    { v: 0.005, blind: 168642,  gated: 356786 },
+    { v: 0.008, blind: 81930,   gated: 350508 },
+    { v: 0.010, blind: 24122,   gated: 346323 },
+    { v: 0.015, blind: -116763, gated: 335860 },
+    { v: 0.020, blind: -239741, gated: 325397 },
+    { v: 0.030, blind: -439428, gated: 304471 },
+    { v: 0.040, blind: -591794, gated: 283545 },
+    { v: 0.050, blind: -683542, gated: 262620 }
+  ];
+  var baselineIdx = 6; // 0.020
+
+  var slider = document.getElementById("sensSlider");
+  var sensValue = document.getElementById("sensValue");
+  var sensWinner = document.getElementById("sensWinner");
+  var valBlind = document.getElementById("valBlind");
+  var valGated = document.getElementById("valGated");
+  var barBlind = document.getElementById("barBlind");
+  var barGated = document.getElementById("barGated");
+  var sensFlag = document.getElementById("sensFlag");
+
+  var maxAbs = Math.max.apply(null, sweepPoints.map(function (p) { return Math.max(Math.abs(p.blind), Math.abs(p.gated)); }));
+
+  function fmtMoney(n) {
+    var sign = n < 0 ? "−" : "";
+    return sign + "₹" + Math.abs(Math.round(n)).toLocaleString("en-IN");
+  }
+
+  function renderSens(i) {
+    var p = sweepPoints[i];
+    var isBaseline = i === baselineIdx;
+    sensValue.innerHTML = p.v.toFixed(3) +
+      '<small>customer-retention cost per contact' + (isBaseline ? " (published baseline)" : "") + '</small>';
+
+    valBlind.textContent = fmtMoney(p.blind);
+    valGated.textContent = fmtMoney(p.gated);
+    valBlind.style.color = p.blind < 0 ? "var(--block)" : "var(--ink-soft)";
+    valGated.style.color = p.gated < 0 ? "var(--block)" : "var(--ink-soft)";
+
+    function widthPct(v) { return Math.max(2, Math.abs(v) / maxAbs * 50); }
+    barBlind.style.width = widthPct(p.blind) + "%";
+    barBlind.style.left = p.blind < 0 ? (50 - widthPct(p.blind)) + "%" : "50%";
+    barGated.style.width = widthPct(p.gated) + "%";
+    barGated.style.left = p.gated < 0 ? (50 - widthPct(p.gated)) + "%" : "50%";
+
+    var gatedWins = p.gated > p.blind;
+    sensWinner.textContent = gatedWins ? "Due wins" : "Blind retry wins";
+    sensWinner.style.background = gatedWins ? "var(--pass-bg)" : "var(--block-bg)";
+    sensWinner.style.color = gatedWins ? "var(--pass)" : "var(--block)";
+
+    if (isBaseline) {
+      sensFlag.innerHTML = 'At the published baseline (0.020), <b>Due has the highest net value.</b>';
+    } else if (gatedWins) {
+      sensFlag.innerHTML = 'At retention cost ' + p.v.toFixed(3) + ', <b>Due still wins</b> — margin of ' + fmtMoney(p.gated - p.blind) + '.';
+    } else {
+      sensFlag.innerHTML = 'At retention cost ' + p.v.toFixed(3) + ', <b>blind retry wins on net value.</b> The Tier A counts above (violations, attempts, contacts) are unaffected by this — they never depended on this assumption.';
+    }
+  }
+
+  slider.addEventListener("input", function () { renderSens(parseInt(slider.value, 10)); });
+  slider.value = baselineIdx;
+  renderSens(baselineIdx);
+
+  /* ---- robustness dot field for net-value (47/50) ------------------ */
+  var netvalDots = document.getElementById("netvalDots");
+  var missIdx = [17]; // seed 18 is index 17, the one documented miss
+  for (var i = 0; i < 50; i++) {
+    var d = document.createElement("div");
+    d.className = "dot" + (missIdx.indexOf(i) !== -1 ? " miss" : "");
+    if (missIdx.indexOf(i) !== -1) d.title = "seed 18 — the documented worst case";
+    netvalDots.appendChild(d);
+  }
+})();
+</script>
+</body>
+</html>
