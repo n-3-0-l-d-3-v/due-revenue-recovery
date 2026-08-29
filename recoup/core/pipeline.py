@@ -184,6 +184,15 @@ class RecoveryPipeline:
         the original DecisionRecord — that record is sealed, and an append-only
         log whose entries can be edited afterwards is not an audit trail.
         """
+        # Built once, not once per pending action. events_by_id is fixed for the
+        # duration of this call, so re-deriving the batch-wide context (which
+        # itself does a full pass and sorts every amount) inside the loop below
+        # made this method O(events x pending) instead of O(events + pending) —
+        # invisible at 1,000 events, a multi-minute stall at 15,000. Found by
+        # running the new --stress scale test after this repo was already
+        # published; fixed here rather than silently smoothed over.
+        ctx = BatchContext.from_events(list(events_by_id.values()))
+
         for pending in result.pending:
             when = at or pending.scheduled_for
             if when < pending.scheduled_for:
@@ -196,7 +205,6 @@ class RecoveryPipeline:
                 # The pre-debit notice was sent when the action was deferred.
                 notices_sent={pending.event_id: pending.notice_sent_at or pending.scheduled_for},
             )
-            ctx = BatchContext.from_events(list(events_by_id.values()))
             outcome = self.engine.revalidate(
                 event, pending, gate_ctx, self.diagnoser.diagnose(event, ctx)
             )
