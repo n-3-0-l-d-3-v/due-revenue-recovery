@@ -110,7 +110,44 @@ def judge_mode(args) -> int:
     rule("VERIFY")
     print("  python demo.py                 full run, ten sections")
     print("  python tools/mutation_check.py break each safety rule, confirm tests catch it")
-    print("  pytest -q                      142 tests, 15 property-based")
+    print("  pytest -q                      153 tests, 15 property-based")
+    print(f"\ncompleted in {time.time() - _T0:.1f}s\n")
+    return 0
+
+
+def robustness_mode(args) -> int:
+    """Prove seed 42 wasn't cherry-picked: run N independent random worlds.
+
+    A single demo run is an anecdote. This is the answer to "did you just get
+    lucky with one dataset?" — and it reports the worst case for us explicitly,
+    because a robustness report that hides its own worst case isn't one.
+    """
+    from recoup.harness.robustness import sweep
+
+    n = args.seeds
+    print(f"\nRunning {n} independent random worlds ({args.events} events each)...")
+    print("(each world is a completely fresh random batch — different amounts,")
+    print(" different failure reasons, different customers, different outages)\n")
+
+    report = sweep(range(1, n + 1), n_events=args.events)
+    print(report.render())
+    print(f"\ncompleted in {time.time() - _T0:.1f}s\n")
+    return 0
+
+
+def stress_mode(args) -> int:
+    """Two harder questions than random sampling can answer: does this hold at
+    scale, and does it hold against a batch built to be hostile on purpose?"""
+    from recoup.harness.stress import (
+        adversarial_run,
+        render_adversarial,
+        render_scale,
+        scale_test,
+    )
+
+    print(render_scale(scale_test()))
+    print()
+    print(render_adversarial(adversarial_run(n_events=args.events, seed=args.seed)))
     print(f"\ncompleted in {time.time() - _T0:.1f}s\n")
     return 0
 
@@ -121,9 +158,24 @@ def main() -> int:
     ap.add_argument("--seed", type=int, default=42)
     ap.add_argument("--quick", action="store_true", help="skip the sensitivity sweep")
     ap.add_argument("--judge", action="store_true", help="60-second version: claims only")
+    ap.add_argument(
+        "--robustness", action="store_true",
+        help="run across many random seeds to prove seed 42 wasn't cherry-picked",
+    )
+    ap.add_argument("--seeds", type=int, default=50, help="seed count for --robustness")
+    ap.add_argument(
+        "--stress", action="store_true",
+        help="scale test plus a deliberately hostile batch, not just random variation",
+    )
     args = ap.parse_args()
 
     started = time.time()
+
+    if args.robustness:
+        return robustness_mode(args)
+
+    if args.stress:
+        return stress_mode(args)
 
     if args.judge:
         return judge_mode(args)
