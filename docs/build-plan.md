@@ -2,7 +2,7 @@
 
 Razorpay AI Buildathon, Track 03. Solo build. Ship **31 Aug 2026**, deadline **5 Sept 2026**.
 
-Working name: **Recoup** (rename later if something better lands — do not spend an hour on this).
+Working name: **Due** (rename later if something better lands — do not spend an hour on this).
 
 ---
 
@@ -34,7 +34,7 @@ Second rule: **re-validate at execution time.** A decision made now that execute
 ## Architecture
 
 ```
-recoup/
+due/
 ├── sim/               event generator + ground truth
 ├── core/
 │   ├── models.py      RiskEvent, Diagnosis, CandidateAction, DecisionRecord, Outcome

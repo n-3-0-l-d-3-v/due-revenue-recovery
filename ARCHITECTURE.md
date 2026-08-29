@@ -42,7 +42,7 @@ full gate first. Consent can be withdrawn and counters can move in between.
 ## 2. Module map
 
 ```
-recoup/
+due/
 ├── core/
 │   ├── models.py       RiskEvent · Diagnosis · CandidateAction · GateResult
 │   │                   EVComponents · DecisionRecord · RevalidationEntry
@@ -63,7 +63,7 @@ recoup/
 
 ### The import boundary that makes the numbers mean anything
 
-`recoup.core` **must never import from `recoup.sim`.**
+`due.core` **must never import from `due.sim`.**
 
 The simulator holds the latent truth — the real cause behind each decline, the day a
 customer's balance actually recovers, whether an issuer was genuinely down. If any

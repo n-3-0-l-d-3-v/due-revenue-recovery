@@ -1,11 +1,11 @@
-# Recoup — a policy-gated revenue recovery control plane
+# Due — a policy-gated revenue recovery control plane
 
 **Razorpay AI Buildathon · Track 03 — AI Revenue Recovery**
 
 Recovering failed payments is not the hard part. Knowing **which failures are worth
 recovering, when, and when you are legally required to stop** is the hard part.
 
-Recoup turns every at-risk rupee into a bounded, policy-gated decision and proves in a
+Due turns every at-risk rupee into a bounded, policy-gated decision and proves in a
 replayable audit trail that no action ever breached a card-network attempt cap or an
 RBI e-mandate rule.
 
@@ -25,7 +25,7 @@ Same 1,000-event batch, ₹1,113,772 at risk, four strategies, identical scoring
 | do nothing | ₹0 | 0.0% | 0 | 0 | 0 | ₹0 |
 | fixed T+3 *(Razorpay's documented retry)* | ₹294,538 | 26.4% | 2,151 | 0 | 715 | ₹236,167 |
 | blind retry *(what most "AI retry agents" are)* | ₹439,822 | **39.5%** | 4,652 | 1,768 | 2,493 | **−₹239,741** |
-| **Recoup** | ₹380,067 | 34.1% | **441** | **313** | **0** | **₹325,397** |
+| **Due** | ₹380,067 | 34.1% | **441** | **313** | **0** | **₹325,397** |
 
 Blind retry recovers ₹59,755 **more** and is worth ₹565,138 **less**.
 
@@ -141,7 +141,7 @@ Razorpay ships an **Intelligent Retry Engine** (beta, GFF 2026) that already doe
 context-aware retry timing for UPI Autopay, reporting +8% over baseline. This is not a
 claim to have invented smart retries.
 
-That engine optimises **the debit attempt, at the gateway layer**. Recoup optimises the
+That engine optimises **the debit attempt, at the gateway layer**. Due optimises the
 **merchant's recovery portfolio** — the parts a PSP is structurally unable to see:
 
 - allocating a finite attempt-and-contact budget across a whole batch
