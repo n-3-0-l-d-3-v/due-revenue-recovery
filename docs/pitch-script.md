@@ -1,211 +1,192 @@
-# 5-Minute Pitch Video — Script
+# What to say — word for word
 
-Read this aloud. Do not improvise. Improvised takes run long, bury the numbers, and
-lose the one line that matters.
+Read this out loud a few times before you record. Not to memorize it like a
+script — to find where *your* voice would say it differently, and change those
+words to yours. The numbers stay exact. Everything else is allowed to sound
+like you.
 
-**Total spoken words: ~720.** At a calm 150 wpm that is 4:48, leaving margin.
+**~700 words. At normal talking speed that's about 4:40, which leaves you room.**
 
-**Rule for the whole video:** lead with what cannot be argued with. Tier A first
-(counts and rule evaluations), Tier B second (net value, with its condition stated).
-Opening on the ₹565k gap invites *"where does that number come from?"* as the first
-question instead of the last.
-
----
-
-## Before you record
-
-Have four terminals ready, pre-`cd`'d into the repo, font size ~18pt, dark theme:
-
-| Terminal | Pre-typed command (do not press Enter yet) |
-|---|---|
-| A | `python demo.py` |
-| B | `python tools/mutation_check.py` |
-| C | `python live_demo.py --live` |
-| D | `pytest -q` |
-
-Also open: the counterfactual table section of `README.md`, and the Razorpay dashboard
-showing the two orders with the identical receipt.
-
-Record at 1080p minimum. Terminal only — no webcam needed, but keep audio clean.
+The one rule that matters more than any line below: **say the real number, not
+the round one.** "Two thousand four hundred and ninety-three" sounds like
+someone who measured it. "About two and a half thousand" sounds like someone
+who's guessing. You're not guessing, so don't talk like you are.
 
 ---
 
-## 0:00 – 0:25 · The result, immediately
+## 0:00–0:25 — Open cold, on the number
 
-> **SCREEN:** the counterfactual table, already on screen. No title card.
+*Screen: the dashboard, summary strip, already loaded and sitting still.*
 
-"Same batch of a thousand failed payments. Eleven lakh rupees at risk.
-
-Look at the second row and the fourth. Blind retry — which is what most AI payment
-recovery agents actually are — recovers **more money** than my system. Fifty-nine
-thousand, seven hundred and fifty-five rupees more.
-
-It also commits **two thousand four hundred and ninety-three** card network and RBI
-violations. Mine commits zero. And it burns ten times the retry attempts to get there.
-
-That gap is the whole project."
-
----
-
-## 0:25 – 1:05 · The real problem
-
-> **SCREEN:** `docs/domain-primer.md`, scroll the failure taxonomy table slowly.
-
-"Recovering failed payments is not the hard part. The hard part is knowing which
-failures are worth recovering, when to try, and when you are legally required to stop.
-
-On UPI, **eighty-two percent** of failures are business declines — the bank
-deliberately said no. Retrying those unchanged gets the same answer. And some codes are
-terminal: retry an expired card or a fraud-flagged payment and Mastercard charges you
-per attempt under its Excessive Attempts programme.
-
-There's also money nobody looks at. **Twelve point seven percent** of the value in this
-batch is authorised-but-uncaptured — the bank approved it, the customer consented, and
-the merchant never claimed it. It appears in no failure dashboard, because nothing
-failed. A retry-based system scores exactly zero against it. You just have to capture."
+> Same batch. A thousand failed payments, eleven lakh rupees on the line.
+>
+> Look at these two numbers. A blind retry bot — which, stripped of the buzzwords,
+> is what most "AI payment recovery" actually is — recovers more money than my
+> system does. Fifty-nine thousand, seven hundred and fifty-five rupees more.
+>
+> And in doing that, it breaks a card network rule or an RBI rule two thousand
+> four hundred and ninety-three times. Mine breaks it zero times.
+>
+> That gap — recovering slightly less, but never once crossing a line — is the
+> whole project. Let me show you why that trade is the right one.
 
 ---
 
-## 1:05 – 1:50 · The architecture, and a live block
+## 0:25–1:00 — Why this is actually hard
 
-> **SCREEN:** Terminal A. Press Enter. Let section 3 render, then scroll to the gate blocks.
+*Screen: still the dashboard, scroll slowly to the comparison table.*
 
-"So every event runs through the same path: diagnose the root cause, enumerate the
-actions that make sense for that cause, and then — before anything is scored — the
-policy gate.
-
-The gate runs **before** the scorer. Nothing downstream can choose an action the gate
-did not already permit. That means no amount of optimisation can buy its way past a
-compliance rule — by construction, not by training.
-
-Here it is refusing. A hundred and nineteen actions blocked by the contact fatigue cap,
-forty-seven by withdrawn consent. And every rule that *passed* is recorded too — because
-a gate that logs only its refusals can prove it noticed some violations. It cannot prove
-compliance."
+> Here's the thing nobody tells you about a failed payment: retrying it isn't
+> automatically the right move. On UPI, about eighty percent of failures are the
+> bank saying no on purpose — wrong PIN, no balance, card blocked. Retry those
+> and you get the same "no" again. Some of them you're not even allowed to
+> retry — Mastercard fines you for hammering a dead card.
+>
+> There's also money that isn't even failed. Almost thirteen percent of what's
+> at risk in this batch is money the bank already approved — the merchant just
+> never collected it. Retrying does nothing there. You have to go grab it.
 
 ---
 
-## 1:50 – 2:40 · The counterfactual
+## 1:00–1:50 — One real refusal, start to finish
 
-> **SCREEN:** Terminal A, section 4 — the table. Then section 5, the Tier split.
+*Screen: scroll to the refusal card. Let the ₹5,283 sit for a beat before talking.*
 
-"Four strategies, same events, same scoring code. Nobody scores themselves.
-
-Fixed T+3 is Razorpay's own documented subscription retry — not a strawman. Blind retry
-is the reason-agnostic version. Mine is the gated one.
-
-Blind retry wins on recovery rate. It loses on everything else: four thousand six hundred
-attempts against my four hundred and forty-one, two thousand four hundred violations
-against zero.
-
-And notice how the claims are split. The counts — zero violations, ten times fewer
-attempts, eighty-six percent of the recovery — depend on **no economic assumption at
-all**. I verified that under four cost models, including one where every cost is zero.
-Those numbers cannot be argued with.
-
-The net value number can. I'll come back to that."
+> So here's how it actually decides. One event: five thousand two hundred and
+> eighty-three rupees, insufficient funds. It checks seven rules before it does
+> anything — network caps, is this card even allowed to retry, is there an RBI
+> notice window open. All fine. Then it hits one thing: this customer opted out.
+>
+> Blocked. Full stop. Doesn't matter that it's real money. That's not a
+> judgment call the system is allowed to make — consent overrides everything,
+> every time.
+>
+> And notice it logged the six checks that *passed*, not just the one that
+> failed. If you only write down your refusals, you can't actually prove you
+> checked anything else.
 
 ---
 
-## 2:40 – 3:20 · The tests catch a broken gate
+## 1:50–2:30 — The four-way comparison
 
-> **SCREEN:** Terminal D — `pytest -q`, show 131 passed. Then Terminal B — mutation check.
+*Screen: the full comparison table.*
 
-"A hundred and thirty-one tests, fifteen of them property-based.
-
-But a green suite proves the tests pass. It does not prove they would fail if the system
-broke. So this deliberately breaks each safety rule and checks the suite notices.
-
-All eight caught. And this found something: my headline invariant test — the one proving
-retries never exceed the cap — was passing **vacuously**. Twice. It read the cap from the
-same config it was validating, and it generated payment IDs so unique that no payment
-ever reached a second retry. There was nothing to cap.
-
-I'd have shipped a proof of nothing."
-
----
-
-## 3:20 – 3:55 · The bug the live API found
-
-> **SCREEN:** Terminal C, then the Razorpay dashboard showing two orders, same receipt.
-
-"This runs against Razorpay's real test-mode API.
-
-I used the `receipt` field as my idempotency key — that's the intuitive reading. So I
-sent the same receipt twice.
-
-Two orders. Two different IDs. Razorpay does not deduplicate on receipt.
-
-In production that's a double charge: network timeout, automatic retry, customer billed
-twice. I had written that exact failure mode into my own domain notes and then wrote it
-into my client anyway. Reading the docs didn't catch it. Calling the API did.
-
-It's fixed client-side now, and the remaining limitation — that the map is in-process —
-is documented rather than hidden."
+> Four approaches, same thousand events, same code measuring all of them —
+> nobody grades their own homework here.
+>
+> Fixed T+3 is what Razorpay's own retry logic actually does today, not a
+> strawman I invented. Blind retry is the reason-agnostic version — try
+> everything, five times. Mine diagnoses first, checks the rulebook, then
+> decides.
+>
+> blind retry wins on raw recovery. It loses everywhere else — four thousand six
+> hundred and fifty-two attempts against my four hundred and forty-one, two
+> thousand four hundred violations against zero.
+>
+> And here's the part I actually want you to sit with: the zero-violations
+> number and the attempt counts don't depend on any assumption I made about
+> costs. I checked that four different ways, including one where every cost is
+> set to zero. They still hold. Those numbers can't be argued with — they're
+> just counts.
 
 ---
 
-## 3:55 – 4:30 · Where my own claim fails
+## 2:30–3:05 — Breaking it on purpose
 
-> **SCREEN:** Terminal A, section 6 — sensitivity.
+*Screen: switch to the terminal. Run `python tools/mutation_check.py` live.*
 
-"Back to net value. That claim depends on one assumption: that repeatedly retrying and
-contacting a customer costs you something in retention.
-
-So I measured what happens if it costs nothing. Here — with all retention cost removed,
-**blind retry wins.** By about nine percent.
-
-That's in my README, it's printed by the demo, and there's a test that asserts the
-competitor wins in that region. If someone quietly deletes it, the suite fails.
-
-The counts from earlier are untouched by this. Zero violations is still zero."
-
----
-
-## 4:30 – 5:00 · Close
-
-> **SCREEN:** Terminal A, section 8 — exception queue. Then the repo tree.
-
-"Sixteen percent of decisions go to a human, with a suggested action and a closure path
-that survives the next batch. A system claiming a hundred percent automation is either
-lying or unsafe.
-
-Razorpay already ships an Intelligent Retry Engine that does context-aware retry timing
-at the gateway layer. This isn't a claim to have invented smart retries. It sits one
-layer up — the merchant's recovery portfolio, where contact fatigue, customer lifetime
-value and issuer standing live, and where a PSP structurally cannot see.
-
-Everything I've shown runs in one command. Thank you."
+> A test suite that's all green tells you the tests pass. It doesn't tell you
+> they'd catch anything if the system actually broke. So I wrote something
+> whose only job is to sabotage my own rules, one at a time, and check whether
+> the tests notice.
+>
+> *(while it runs)* All eight sabotage attempts get caught. But building this
+> found something worse — my main safety test, the one proving retries never
+> go over the limit, was passing without actually testing anything. Twice. It
+> read the limit from the same file it was supposed to be checking, so loosening
+> the limit loosened the test right along with it. I fixed that. It's in the
+> commit history, not smoothed over.
 
 ---
 
-## What to cut if you run long
+## 3:05–3:45 — Where I'm wrong
 
-In this order — the last item is load-bearing and never gets cut:
+*Screen: back to the dashboard, the sensitivity slider. Actually drag it.*
 
-1. The uncaptured-authorisations paragraph (0:25–1:05) — trim to one sentence
-2. The domain-primer scroll — cut to a static frame
-3. The exception queue (4:30) — trim to one sentence
-4. **Never cut:** the Tier A counts, the mutation check, the sensitivity boundary
+> The "worth more" claim — not the violations, the net value one — rests on
+> exactly one assumption: that annoying a customer costs you something.
+>
+> Watch what happens if I say it costs nothing. *(drag the slider to zero)*
+>
+> blind retry wins. By about nine percent.
+>
+> That's not buried in an appendix somewhere — it's on the page, it's printed
+> by the tool itself, and there's a test in the suite whose entire job is to
+> make sure the *other guy* wins in that specific case. If someone quietly
+> deleted that finding later, the test would fail and tell on them.
+>
+> The zero-violations number doesn't move, though. That one was never resting
+> on this assumption in the first place.
 
-## Common mistakes to avoid on the take
+---
 
-- **Do not say "AI agent."** Say what it does. The judges have heard "AI agent" four
-  hundred times today and it signals nothing.
-- **Do not round.** "Two thousand four hundred and ninety-three" lands as measurement.
-  "About two and a half thousand" lands as estimate.
-- **Do not apologise for the simulator.** State it once, in the sensitivity section,
-  and move on. Hedging repeatedly reads as insecurity about the whole result.
-- **Do not skip the boundary section to save time.** It is the single most credible
-  thirty-five seconds in the video. Anyone can show a demo that works; almost nobody
-  shows where their own claim breaks.
-- **Let the terminal finish rendering** before you talk over it. Dead air for two
-  seconds is fine; talking over output nobody can read is not.
+## 3:45–4:20 — Not one lucky batch
 
-## After the first take
+*Screen: terminal, `pytest -q`, let it complete. Then the robustness section on the dashboard.*
 
-Watch it once with the sound off. If you cannot tell what is happening from the screen
-alone, the screen is wrong, not the script. Then watch with sound only — if the numbers
-don't land as spoken words, slow down.
+> A hundred and fifty-three tests. But more than that — I ran this whole
+> comparison fifty separate times, fifty completely fresh random batches, fifty
+> thousand simulated payments total.
+>
+> Zero violations held in every single one. Not most — all fifty.
+>
+> The net-value win held in forty-seven of fifty. Not perfect, and I'm not
+> going to pretend it is — the one time it didn't, I named the exact seed and
+> the exact margin it lost by. A result that only shows you its good days isn't
+> a result.
 
-Expect take one to run 6:30. That's normal. The cuts above get you to 5:00.
+---
+
+## 4:20–4:45 — Where this actually sits
+
+> Razorpay already has a smart retry engine doing timing predictions at the
+> gateway level. I'm not claiming to have beaten that. This sits one layer up —
+> the stuff a gateway genuinely can't see. How tired is this specific customer
+> of being contacted. What's this customer worth over time. Is this issuer
+> already unhappy with us today. And a paper trail you could actually hand to
+> a compliance team.
+
+---
+
+## 4:45–5:00 — Close
+
+*Screen: the "what building this caught" section.*
+
+> Everything I just showed you runs from one command, on your machine, right
+> now. No cherry-picking, nothing pre-baked for the camera.
+>
+> Thanks for watching.
+
+---
+
+## If you're running long, cut in this order
+
+1. The "why this is hard" section (0:25–1:00) — trim to two sentences.
+2. "Where this sits" (4:20–4:45) — cut to one sentence.
+3. **Never cut:** the refusal walkthrough, the mutation-check moment, or the
+   sensitivity slider. Those three are what separate this from a demo reel.
+
+## Delivery notes
+
+- **Don't say "AI agent."** Everyone judging today has heard it fifty times
+  already and it tells them nothing about what your system actually does.
+  Say what it does instead.
+- **Pause before a number, not after.** A half-second of silence before
+  "fifty-nine thousand, seven hundred and fifty-five" makes it land as a fact.
+  Rushing into it makes it sound like filler.
+- **If you flub a line, stop, breathe, say the sentence again from its start.**
+  Don't try to patch a stumble mid-sentence — it reads as nervous on camera even
+  when it wasn't. A clean restart cuts easily in editing; a stumble doesn't.
+- **Let the terminal output finish rendering before you talk over it.** Two
+  seconds of dead air while text appears is fine. Talking over text nobody can
+  read yet is not.
