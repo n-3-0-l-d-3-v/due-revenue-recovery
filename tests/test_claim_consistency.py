@@ -23,7 +23,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 README = (ROOT / "README.md").read_text(encoding="utf-8")
 ARCHITECTURE = (ROOT / "ARCHITECTURE.md").read_text(encoding="utf-8")
-SCRIPT = (ROOT / "docs" / "video-script.md").read_text(encoding="utf-8")
+SCRIPT = (ROOT / "docs" / "pitch-script.md").read_text(encoding="utf-8")
 
 
 def _run(*args: str) -> str:
@@ -54,11 +54,16 @@ def _normalise(text: str) -> str:
 
 
 def _flat(text: str) -> str:
-    """Lowercase with whitespace collapsed.
+    """Lowercase, blockquote markers stripped, whitespace collapsed.
 
-    Markdown hard-wraps prose, so a spoken number can straddle a line break and
-    a naive substring check misses it. The demo also prints its headers in caps.
-    Both are presentation, not substance."""
+    Markdown hard-wraps prose, so a spoken number can straddle a line break —
+    and if that break falls inside a blockquote, the '>' continuation marker is
+    not whitespace and survives a naive collapse, splitting a word in two
+    ("four thousand six" + ">" + "hundred"). The '>' is quoting syntax, not
+    spoken content, so it is stripped before whitespace collapses. The demo
+    also prints its headers in caps; that too is presentation, not substance.
+    """
+    text = re.sub(r"(?m)^\s*>\s?", " ", text)
     return re.sub(r"\s+", " ", text).lower()
 
 
