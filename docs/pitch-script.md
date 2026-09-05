@@ -10,23 +10,25 @@ Companion doc: `docs/demo-guide.md` has the shot-by-shot visual plan — what's 
 screen at every second, including on-screen text that carries some of the detail
 so you don't have to say every number out loud.
 
-**~573 spoken words — down from an earlier ~910-word draft, cut specifically
-so a real recorded take stays under 5:00.** Here's the actual math, not a
-guess: at a natural, unhurried pace (~150–160 wpm) this reads in about
-3:35–3:50. But this script is number-heavy — "two thousand four hundred and
-ninety-three" has to be said more slowly and deliberately than filler words,
-the same way "pause before a number" already tells you to — so treat 150 wpm
-as closer to true than 175. On top of that, real recording adds time a silent
-read never shows: breath, a flubbed line restarted, the two-second pauses this
-script asks for while a terminal renders. Budgeted at roughly 5–10 seconds per
-block across 9 blocks, that's up to ~75 seconds of overhead. Put together:
-**expect 4:50–5:05 on a real take**, not 3:45.
+**~700 spoken words, written as full sentences on purpose** — an earlier pass
+of this script cut so hard it turned into clipped fragments, which read as
+robotic rather than pitched. That's fixed now; this version should sound like
+a person talking, not a list of facts.
 
-That's still tight against a 5:00 cap — do one full recorded take (not a
-silent read) before you touch the video edit at all, and compare it against
-this estimate. If it comes in over, cut further using the list near the
-bottom of this file, in order, rather than speeding up your delivery — a
-rushed number is worse than a shorter script.
+Here's the honest timing math. At a natural pace (~160 wpm) that's about
+4:20 of speaking. This script is also number-heavy — a figure like "two
+thousand four hundred and ninety-three" has to be said more slowly and
+deliberately than ordinary words, exactly like the delivery notes below ask
+for — and real recording always adds time a silent read doesn't show: breath,
+a restarted line, the couple of seconds this script asks you to hold while a
+terminal renders. Put together, expect a real take to land around
+**4:45–5:05** — close to the 5:00 cap, not comfortably under it.
+
+So: do one full recorded take, not a silent read-through, before you touch
+the video edit. If it comes in over 5:00, cut using the list near the bottom
+of this file — don't speed-talk or clip sentences back into fragments to
+compensate. A slightly longer script delivered like a person beats a shorter
+one that sounds read off a card.
 
 ---
 
@@ -34,126 +36,136 @@ rushed number is worse than a shorter script.
 
 > Same batch, a thousand failed payments, eleven lakh rupees on the line.
 >
-> A blind retry bot — what most "AI revenue recovery" actually is — recovers
-> fifty-nine thousand, seven hundred and fifty-five rupees more than mine.
-> To get there, it breaks a card-network or RBI rule two thousand four
-> hundred and ninety-three times. Mine: zero.
+> A blind retry bot — stripped of the buzzwords, what most "AI revenue
+> recovery" actually is — recovers fifty-nine thousand, seven hundred and
+> fifty-five rupees more than mine does, and breaks a card-network or RBI
+> rule two thousand four hundred and ninety-three times to get there. Mine
+> breaks zero.
 >
 > That trade is the whole point.
 
 ---
 
-## 0:20–0:50 — The problem nobody names correctly
+## 0:20–0:55 — The problem nobody names correctly
 
 > A failed payment isn't one problem. It's five.
 >
-> A card declines, a checkout's abandoned, a subscription bounces. And two
-> nobody names — an approved payment never collected, and one that arrives
-> after the customer gave up. Together, thirteen percent of the money at
-> risk. Nothing to retry. You just go get it.
+> A card declines. A checkout gets abandoned. A subscription bounces. And
+> two you've probably never heard named: a payment the bank already
+> approved that the merchant forgot to collect, and one that arrives after
+> the customer's already given up. Together, those two are almost thirteen
+> percent of the money at risk, and there's nothing to retry — you just go
+> get it.
 >
-> On UPI, eighty-two percent of declines are the bank saying no on purpose.
-> Legally, some of those you can't even retry.
+> For the ones that actually failed: on UPI, eighty-two percent of declines
+> are the bank saying no on purpose, and legally, some you can't even retry.
 
 ---
 
-## 0:50–1:35 — How it actually decides
+## 0:55–1:40 — How it actually decides
 
-> Every at-risk rupee goes through four steps.
+> Every at-risk rupee goes through the same four steps.
 >
-> Diagnose the real cause, not the error code — ninety-four percent lookup
-> against Razorpay's docs, the rest genuine inference where the bank didn't
-> say why.
+> First, diagnose the real cause, not just the error code — ninety-four
+> percent lookup against Razorpay's own docs, the rest genuine inference,
+> because the bank didn't say why.
 >
-> Then, a rulebook, before anything else. Eleven hard rules: attempt caps,
-> RBI's notice window, consent, contact fatigue. Eleven isn't the claim —
-> the pattern is. Rule twelve is one file, not a rewrite.
+> Then, a rulebook, before anything else: eleven hard rules today, covering
+> attempt caps, RBI's notice window, consent, and contact fatigue. Eleven
+> isn't the claim, though — the pattern is, since adding a twelfth is one
+> file, not a rewrite.
 >
-> Only then does it ask if acting is worth it, against every real cost,
-> including losing the customer for good.
+> Only after that does it ask if acting is worth it, weighing success
+> against every real cost, including losing the customer for good.
 >
-> Every decision gets sealed into a hash-chained record, forever.
-> Tamper-evident, not tamper-proof — the real fix, an external anchor, is
+> And every decision gets sealed into a hash-chained record, forever —
+> tamper-evident, not tamper-proof, with the real fix, an external anchor,
 > already built in.
 
 ---
 
-## 1:35–2:10 — One real refusal
+## 1:40–2:15 — One real refusal
 
-> Five thousand two hundred and eighty-three rupees. Insufficient funds. Six
-> rules pass. Then: this customer opted out.
+> Five thousand two hundred and eighty-three rupees. Insufficient funds.
+> Seven rules checked, and six of them pass. Then: this customer opted out.
 >
-> Blocked. Full stop. Real money on the table doesn't matter — consent
-> overrides the profit calculation.
+> Blocked, full stop. It doesn't matter that the money's just sitting there.
+> Consent overrides the profit calculation.
 
 ---
 
-## 2:10–2:45 — The comparison, and the split that matters
+## 2:15–2:50 — The comparison, and the split that matters
 
-> Four strategies, one batch, the same code grading all of them.
+> Four strategies, one batch, the exact same code grading all of them.
 >
-> Say it plainly: blind retry wins on raw recovery, loses everywhere else.
-> Four thousand six hundred and fifty-two attempts against my four hundred
-> and forty-one, six times the contacts, two thousand four hundred and
-> ninety-three violations against zero.
+> Let's say it plainly: blind retry wins on raw recovery, and loses
+> everywhere else — four thousand six hundred and fifty-two attempts against
+> my four hundred and forty-one, six times the contacts, two thousand four
+> hundred and ninety-three violations against zero.
 >
-> Those counts don't rest on any cost assumption. Checked four ways,
-> including zero cost. Nobody argues with a count.
+> Here's the part worth sitting with: those counts don't depend on any cost
+> assumption I made. I checked that four ways, including zero cost, and
+> they don't move — nobody can argue with a count.
 
 ---
 
-## 2:45–3:15 — Breaking it on purpose
+## 2:50–3:25 — Breaking it on purpose
 
-> A green suite proves tests pass, not that they'd catch a real break. So I
-> built something whose only job is to sabotage my own rules.
+> A green test suite proves the tests pass, not that they'd catch a real
+> break. So I built something whose only job is to sabotage my own rules.
 >
-> *(mutation check runs)* Eight for eight, caught. It found worse first: my
-> main safety test was passing without testing anything, twice. Both fixed,
-> both in the commit history.
+> *(mutation check runs)* Eight for eight, caught. But building that tool
+> found something worse first: my main safety test was passing without
+> testing anything, twice — both fixed now, both sitting in the commit
+> history, not smoothed over.
 
 ---
 
-## 3:15–3:45 — Where I'm wrong
+## 3:25–3:55 — Where I'm wrong
 
-> The "worth more" claim rests on one assumption: annoying a customer costs
-> something, even a little.
+> The "worth more" claim rests on exactly one assumption: that annoying a
+> customer costs something, even a little.
 >
-> Watch what happens at zero. *(drag the slider to zero)*
+> Watch what happens if it costs nothing. *(drag the slider to zero)*
 >
-> Blind retry wins, by about nine percent — printed by the tool itself, with
-> a test whose only job is making sure the other guy wins right here.
+> Blind retry wins, by about nine percent — printed by the tool itself,
+> right on the page, with a test whose entire job is making sure the other
+> guy wins in exactly this spot.
 
 ---
 
-## 3:45–4:10 — Not luck, and not just rules
+## 3:55–4:20 — Not luck, and not just rules
 
-> A hundred and sixty tests. Fifty random batches, fifty thousand payments,
-> zero violations in every one, plus a batch built purely hostile.
+> A hundred and sixty tests back this up. Fifty random batches, fifty
+> thousand payments, zero violations every time, plus a batch built to be
+> hostile on purpose — and it held there too.
 >
-> I also built a Claude classifier for the toughest declines, measured its
-> ceiling — forty-six point six against a theoretical best of forty-eight
-> point seven — and cut it. Not worth the API call.
+> I also built a Claude classifier for the toughest declines, then measured
+> its ceiling before trusting it: forty-six point six against a theoretical
+> best of forty-eight point seven. Barely two points of headroom, so I cut
+> it.
 >
-> This is deliberately not a free-acting agent — the bounded core a safe
-> agent sits inside, where one wrong move is a real fine.
+> And this is deliberately not a free-acting agent — in a domain where one
+> wrong move means a real fine, the responsible build is the bounded core a
+> safe agent sits inside, not something that acts first and explains later.
 
 ---
 
-## 4:10–4:30 — Close
+## 4:20–4:45 — Close
 
-> Razorpay already has smart retry timing at the gateway. This sits one
-> layer up, on the parts a gateway can't see.
+> Razorpay already has smart retry timing at the gateway — I'm not claiming
+> to have beaten that. This sits one layer up, on what a gateway can't see.
 >
-> Every number here runs from one command, right now — nothing pre-baked.
-> Thanks for watching.
+> Every number here runs from one command, right now. Thanks for watching.
 
 ---
 
-## If you're still over, cut in this order
+## If you're still over time, cut in this order
 
-1. The UPI-decline line in the problem section.
-2. The Bayes-ceiling line in "Not luck, and not just rules" — keep the
-   headline decision (measured, then cut) and drop the two percentages.
+1. The UPI-decline line in the problem section, and the last sentence of the
+   cold open.
+2. In "Not luck, and not just rules," drop the two Claude-ceiling
+   percentages — keep just "I measured its ceiling, and it wasn't worth it."
 3. **Never cut:** the refusal walkthrough, the mutation-check moment, or the
    sensitivity slider. Those three are the whole demo.
 
@@ -171,6 +183,6 @@ rushed number is worse than a shorter script.
   wasn't.
 - **Time yourself on an actual recorded take, not a silent read-through.**
   A silent read always runs faster than a recorded one — breath, emphasis,
-  and small pauses for the visual beats all add real seconds a silent read
-  skips. If your first full take lands past 4:30, that's the signal to trim
-  further using the list above, not to speed-talk through it.
+  and the small pauses this script asks for all add real seconds a silent
+  read skips. If your first full take lands past 4:50, trim further using
+  the list above rather than speeding up your delivery.

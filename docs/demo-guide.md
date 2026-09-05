@@ -66,10 +66,11 @@ a track explicitly marked royalty-free/CC0 from either source above.
 **Opening sting (silent, ~2 seconds, before the 0:00 mark below starts):** a
 title card — project name, one-line tagline, nothing else — that animates in
 and out before your voice begins. This sits *before* the pitch script's
-0:00, so it doesn't eat into your spoken content. The script itself now
-targets ~4:30 spoken (with a built-in margin against the 5:00 cap, since
-real recording always runs longer than a silent read) — see the timing math
-at the top of `docs/pitch-script.md` before you record.
+0:00, so it doesn't eat into your spoken content. The script itself runs
+~700 words, written as full sentences on purpose rather than clipped for
+time — see the honest timing math at the top of `docs/pitch-script.md`
+before you record; it's closer to the 5:00 cap than a word-count guess
+would suggest.
 
 **Closing card (silent, ~2 seconds, after "thanks for watching"):** same
 title treatment, plus the repo and dashboard URLs as plain, legible text —
@@ -141,7 +142,7 @@ answers it before they finish forming the thought.
 
 ---
 
-## 0:20–0:50 — The problem nobody names correctly
+## 0:20–0:55 — The problem nobody names correctly
 
 **Visual:** Full-screen dashboard, scrolled to the "what actually happens to
 1,000 failed payments" breakdown. As each cause is named in voice, that row
@@ -160,7 +161,7 @@ named regulation, on screen, the instant you say it.
 
 ---
 
-## 0:50–1:35 — How it actually decides
+## 0:55–1:40 — How it actually decides
 
 **Visual:** Not the dashboard. Cut to a clean four-box flow diagram (build
 once, animate stage-by-stage): `DIAGNOSE → GATE → SCORE → LEDGER`. Each box
@@ -191,7 +192,7 @@ security hole" before anyone gets to ask it out loud.
 
 ---
 
-## 1:35–2:10 — One real refusal
+## 1:40–2:15 — One real refusal
 
 **Visual:** Cut live to the dashboard's refusal walkthrough section. This is
 proof moment #1 — treat it as the first real "camera stops lying to you"
@@ -211,7 +212,7 @@ do not compress it.
 
 ---
 
-## 2:10–2:45 — The comparison, and the split that matters
+## 2:15–2:50 — The comparison, and the split that matters
 
 **Visual:** Scroll to the four-strategy table, then to the Tier A / Tier B
 cards immediately below it. No cuts — one continuous scroll, so the viewer
@@ -230,7 +231,7 @@ just check this once" without needing a spoken sentence to do it.
 
 ---
 
-## 2:45–3:15 — Breaking it on purpose
+## 2:50–3:25 — Breaking it on purpose
 
 **Visual:** Hard cut to Terminal B, full-screen, no overlay chrome at all —
 this is the one moment the video should look like a real terminal and nothing
@@ -253,7 +254,7 @@ let the plain statement do the work.
 
 ---
 
-## 3:15–3:45 — Where I'm wrong
+## 3:25–3:55 — Where I'm wrong
 
 **Visual:** Cut to the dashboard's sensitivity slider. **Drag it live, on
 camera** — never a before/after screenshot pair.
@@ -272,7 +273,7 @@ under any time pressure.
 
 ---
 
-## 3:45–4:10 — Not luck, and not just rules
+## 3:55–4:20 — Not luck, and not just rules
 
 **Visual:** Terminal C, `pytest -q` already run, output visible (160 passed).
 Then a quick cut to a small pre-rendered chart: 50 dots, one per seed, 49 of
@@ -290,7 +291,7 @@ itself argues "not worth it" before you finish the sentence.
 
 ---
 
-## 4:10–4:30 — Close
+## 4:20–4:45 — Close
 
 **Visual:** Back to the dashboard, scrolled to the "what building this
 actually caught" timeline.
