@@ -13,11 +13,67 @@ in real time, an on-screen overlay that answers the exact objection a judge is
 forming as you speak, or a visible before/after (a slider moving, a number
 flipping, a test going from green to red and back).
 
-**Format:** screen recording (OBS or similar) at 1920×1080, 60fps if your
-recorder supports it — number-heavy content benefits from crisp small text far
-more than from cinematic framing. Webcam circle, small, bottom-right, only in
-the cold open and the close — off everywhere else so it never competes with
-the terminal or dashboard for attention.
+**Format:** screen recording (OBS, free) at 1920×1080, 60fps if your recorder
+supports it. **No webcam, no face, anywhere in the video.** Your real voice
+carries the whole thing — that's the credibility signal — but the visual
+layer is pure screen content, edited like a product launch, not a recorded
+call. That's a deliberate style choice, not a compromise: it puts 100% of the
+screen's attention on the terminal and dashboard, which is where the actual
+proof lives.
+
+**Editing tool:** DaVinci Resolve (free, no watermark, handles the kinetic
+text and transitions below natively) or CapCut (free, faster to learn, fine
+for everything here). Either is enough — nothing in this plan needs a paid
+tool.
+
+---
+
+## The visual identity (build once, before you touch a single take)
+
+A "startup pitch" video reads as premium because of four consistent choices
+running underneath everything, not because of any one flashy moment. Decide
+these first and reuse them everywhere — inconsistency is what makes an edit
+look amateur, not any individual choice being wrong.
+
+- **One color pair.** Pick an accent color (green suits this project's
+  compliance-safety framing) and one danger color for BLOCK/violation states.
+  Use them nowhere else — every green thing on screen should mean "compliant"
+  and every red thing should mean "violation," with no exceptions, so the
+  color itself starts carrying meaning by minute two.
+- **One typeface for every overlay.** A single clean sans (Inter, Space
+  Grotesk, or Manrope — all free) for every number, chip, and caption in the
+  video. Mixing fonts between overlays is the single fastest way to make an
+  edit look thrown together.
+- **Kinetic typography, not static text boxes.** Every overlay in the table
+  below should *enter* with motion — a fast slide-up-and-settle or a quick
+  scale-in, roughly 200–300ms, never an instant hard cut into existence — and
+  exit the same way. This is the actual difference between "pitch video" and
+  "screen recording with captions."
+- **Cut style: quick zoom or whip-pan between beats, not hard cuts.** A short
+  (150–250ms) zoom-punch or motion blur transition between each numbered
+  section below sells "produced" harder than almost anything else on this
+  list, and both editors above have a built-in transition for it.
+
+**Music:** a single instrumental track underneath the whole video, ducked to
+roughly 15–20% volume the instant your voice starts (both editors above have
+an audio-ducking / sidechain feature — use it, don't ride the fader by hand).
+Free, no-attribution sources: YouTube Audio Library, or Pixabay Music. Pick
+something low-key and rhythmic, not dramatic — it should disappear under your
+voice, not compete with it. Confirm the buildathon's submission terms don't
+forbid third-party music before you lock the final export; if in doubt, use
+a track explicitly marked royalty-free/CC0 from either source above.
+
+**Opening sting (silent, ~2 seconds, before the 0:00 mark below starts):** a
+title card — project name, one-line tagline, nothing else — that animates in
+and out before your voice begins. This sits *before* the pitch script's
+0:00, so it doesn't eat into your five minutes of spoken content; total
+runtime becomes ~5:02–5:12, which is fine.
+
+**Closing card (silent, ~2 seconds, after "thanks for watching"):** same
+title treatment, plus the repo and dashboard URLs as plain, legible text —
+this is the frame a judge screenshots if they want to find you again later,
+so it needs to hold still and be readable, not animate the whole time it's
+on screen.
 
 ---
 
@@ -66,12 +122,13 @@ is the single most obvious "this was assembled carelessly" tell.
 
 **Visual:** Split screen, built in post, not live: left half is the dashboard's
 four-strategy table already fully rendered and still; right half is a
-terminal mid-way through `python demo.py --judge` actively printing. Webcam
-circle, bottom-right, small.
+terminal mid-way through `python demo.py --judge` actively printing.
 
 **Motion:** As you say "eleven lakh rupees," the ₹1,113,772 figure on the left
-does a counter-flip up from ₹0. As you say "fifty-nine thousand, seven hundred
-and fifty-five," the delta number does the same flip, landing in red.
+does a kinetic counter-flip up from ₹0 — the digits should visibly roll, not
+snap. As you say "fifty-nine thousand, seven hundred and fifty-five," the
+delta number does the same flip, landing in red with a fast scale-in punch on
+the final frame.
 
 **Why split-screen and not just the dashboard:** the right side proves within
 the first five seconds that the left side isn't a mockup — a viewer's very
@@ -79,8 +136,6 @@ first instinct with any polished number is "is that real or design," and this
 answers it before they finish forming the thought.
 
 **[ACK]** none yet — this beat is establishing stakes, not answering doubts.
-
-Cut webcam after this beat. It doesn't return until the close.
 
 ---
 
@@ -236,7 +291,7 @@ itself argues "not worth it" before you finish the sentence.
 ## 4:35–5:00 — Close
 
 **Visual:** Back to the dashboard, scrolled to the "what building this
-actually caught" timeline. Webcam circle returns, small, bottom-right.
+actually caught" timeline.
 
 **Motion:** Let the final line land on a completely still frame — no scroll,
 no animation — for the last two seconds. A video that keeps moving through its
@@ -244,7 +299,9 @@ own closing line reads as unfinished; stillness reads as confidence.
 
 **Do:** Say the repo URL and dashboard URL out loud, once, clearly, while both
 appear as plain on-screen text (not a stylized card — just legible text a
-judge could pause and read).
+judge could pause and read). Cut straight from this still frame into the
+closing title card described above — no fade to black in between, it kills
+the momentum you just built.
 
 ---
 
@@ -263,6 +320,10 @@ judge could pause and read).
   touching the script again.
 - **Watch it a second time with sound only, eyes closed.** If a number doesn't
   land as a number without seeing it, slow your pacing around it.
+- **Do the edit pass — music, transitions, kinetic text — last, on the whole
+  assembled cut, not per segment as you go.** Applying the visual identity
+  once at the end is what makes it look like one consistent piece of work
+  instead of nine separately styled clips stitched together.
 
 ---
 
