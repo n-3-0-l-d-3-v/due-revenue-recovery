@@ -10,7 +10,7 @@ Companion doc: `docs/demo-guide.md` has the shot-by-shot visual plan — what's 
 screen at every second, including on-screen text that carries some of the detail
 so you don't have to say every number out loud.
 
-**~820 spoken words. At a confident, slightly brisk pace, that's 4:50–5:05.**
+**~850 spoken words. At a confident, slightly brisk pace, that's 4:55–5:10.**
 
 ---
 
@@ -37,8 +37,8 @@ so you don't have to say every number out loud.
 > two you've probably never heard named: an authorization the bank already
 > approved that the merchant forgot to collect, and one that arrives late,
 > after the customer already gave up. Almost thirteen percent of the money at
-> risk in this batch is those last two — money that never even "failed." There's
-> nothing to retry. You just have to go get it.
+> risk in this batch is those last two. There's nothing to retry. You just go
+> get it.
 >
 > And for the ones that did fail: on UPI, eighty-two percent of declines are the
 > bank saying no *on purpose*. Wrong PIN, empty account, blocked card. Retry
@@ -56,17 +56,19 @@ so you don't have to say every number out loud.
 > documentation. The rest genuinely has to be inferred, because the bank
 > literally didn't say why.
 >
-> Then — before anything else — a rulebook. Eleven hard rules: Visa and
+> Then — before anything else — a rulebook. Eleven hard rules today: Visa and
 > Mastercard's attempt caps, RBI's twenty-four-hour notice window for auto-pay,
-> consent, contact fatigue. This isn't a suggestion layer. Nothing downstream is
-> even allowed to see an option the rulebook already killed.
+> consent, contact fatigue. Eleven isn't the claim — the pattern is. Every rule
+> is the same shape, so rule twelve is one file, not a rewrite. And nothing
+> downstream is even allowed to see an option the rulebook already killed.
 >
 > Only then does it ask if acting is worth it — probability of success against
 > every real cost, including the risk of losing the customer for good.
 >
 > And every decision — acted on, refused, or deferred — gets sealed into a
-> hash-chained record. Forever. Including the checks that *passed*, not just
-> the one that failed.
+> hash-chained record, forever. Tamper-evident, not tamper-proof — same limit
+> any log has, Git included — and the real fix, publishing that chain's head
+> outside my own control, is already built in.
 
 ---
 
@@ -134,8 +136,7 @@ so you don't have to say every number out loud.
 
 > A hundred and sixty tests. Fifty separate random batches, fifty thousand
 > simulated payments — zero violations in every single one. Then a batch built
-> on purpose to be hostile — quadruple the normal outage rate — and it still
-> held.
+> on purpose to be hostile, and it held there too.
 >
 > I also built a Claude classifier for the failures where the bank gives no
 > reason at all. Then I measured its ceiling before trusting it: forty-six

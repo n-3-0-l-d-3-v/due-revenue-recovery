@@ -36,8 +36,11 @@ is what makes it read as "produced," not "screen-recorded."
 
 The **[ACK] overlay is the whole premium-vs-amateur difference.** It is how
 you make the video itself argue "I already thought of your objection" instead
-of hoping the judge notices you handled it. Use it sparingly — five or six
-times in five minutes, only at the moments marked below — or it becomes noise.
+of hoping the judge notices you handled it. Use it only at the moments marked
+below — this guide places about nine across five minutes, each tied to a real
+honesty point (a limitation, a boundary, a bug found and fixed), not to a
+flex. More than that reads as noise; fewer and a graded criterion about
+acknowledging risk goes unanswered on screen.
 
 ---
 
@@ -115,10 +118,19 @@ rules," the GATE box visibly expands to show a scrollable list of rule titles
 (real ones, pulled from `rules.yaml`, not placeholder text) before collapsing
 back.
 
+**[ACK]** On "eleven isn't the claim, the pattern is," the GATE box gets a
+small `+1 rule = 1 file` annotation — pre-empting "is that enough rules"
+before a judge finishes forming the thought.
+
 **[ACK]** On "nothing downstream is even allowed to see an option the
 rulebook already killed," show a one-frame code excerpt (real, from
 `due/core/policy/engine.py`) of the `permitted` set being passed forward —
 proving the architectural claim with actual source, not an assertion about it.
+
+**[ACK]** On "tamper-evident, not tamper-proof... the real fix is already
+built in," the LEDGER box gets a one-line annotation: `Ledger.head → external
+anchor (ready)`. This is the moment that answers "isn't an editable log a
+security hole" before anyone gets to ask it out loud.
 
 ---
 
