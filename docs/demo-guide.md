@@ -170,25 +170,25 @@ the video that is intentionally not a live terminal, because the point being
 made is architectural, not numerical, and a diagram teaches structure faster
 than scrolled text does.
 
-**Motion:** On "ninety-four percent... table lookup," a small annotation
-appears under the DIAGNOSE box: `94% cited · 6% inferred`. On "eleven hard
-rules," the GATE box visibly expands to show a scrollable list of rule titles
-(real ones, pulled from `rules.yaml`, not placeholder text) before collapsing
-back.
+**Motion:** On "ninety-four percent... a lookup," a small annotation appears
+under the DIAGNOSE box: `94% cited · 6% inferred`. On "checks a set of
+rules," the GATE box visibly expands to show a scrollable list of rule
+titles (real ones, pulled from `rules.yaml`, not placeholder text) before
+collapsing back.
 
-**[ACK]** On "eleven isn't the claim, the pattern is," the GATE box gets a
-small `+1 rule = 1 file` annotation — pre-empting "is that enough rules"
-before a judge finishes forming the thought.
+The script no longer says two things out loud that are still worth showing
+here on screen, since the point survives fine as text even without a voice
+reading it:
 
-**[ACK]** On "nothing downstream is even allowed to see an option the
-rulebook already killed," show a one-frame code excerpt (real, from
-`due/core/policy/engine.py`) of the `permitted` set being passed forward —
-proving the architectural claim with actual source, not an assertion about it.
+**[ACK]** While the GATE box is expanded, add a small `+1 rule = 1 file`
+annotation next to it — this is the answer to "is eleven rules enough,"
+pre-empting the doubt before a judge finishes forming it, without needing a
+spoken sentence to carry it.
 
-**[ACK]** On "tamper-evident, not tamper-proof... the real fix is already
-built in," the LEDGER box gets a one-line annotation: `Ledger.head → external
-anchor (ready)`. This is the moment that answers "isn't an editable log a
-security hole" before anyone gets to ask it out loud.
+**[ACK]** When the LEDGER box lights up, add a one-line annotation:
+`tamper-evident, not tamper-proof — external anchor: ready`. This is the
+answer to "isn't an editable log a security hole," sitting quietly on
+screen instead of being said out loud.
 
 ---
 

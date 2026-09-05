@@ -11,30 +11,33 @@ Companion doc: `docs/demo-guide.md` has the shot-by-shot visual plan — what's
 on screen at every second, including on-screen text that carries some of the
 detail so you don't have to say every number out loud.
 
-**~770 spoken words.** Writing this to sound like a normal explanation
-instead of a punchy pitch costs more words than the clipped version did —
-that's a real trade-off, and it's the one you asked for. At a calm, natural
-pace this is roughly 4:40–5:00 of talking, before you even add the small
-amount of extra time real recording always takes (a breath, a pause while a
-terminal loads, a restarted line). So this is genuinely close to the 5:00
-limit, possibly a little over it on a real take. Do one full recorded take
-before touching the video edit and see exactly where you land. If it's over,
-use the cut list near the bottom — a couple of sentences can come out
-cleanly without the rest sounding choppy, which is better than speeding up
-your delivery.
+**~715 spoken words, tightened to land inside 4:00–4:45.** Almost every
+point from the earlier version is still here, just said more economically.
+Two smaller ones moved rather than disappeared: the "11 rules is a pattern,
+not a finished rulebook" point and the tamper-evident/external-anchor detail
+are now on-screen text in `docs/demo-guide.md` instead of spoken lines —
+still in the video, just not narrated, which is how a couple of minutes get
+saved without actually cutting content.
+
+At a calm, natural pace this runs roughly 4:15–4:30 of talking; real
+recording adds a bit more (a breath, a pause while a terminal loads), which
+is where the room to 4:45 comes from. Do one full recorded take before
+touching the video edit and check where you land. If you're still over, use
+the cut list near the bottom — a couple of sentences can come out cleanly
+without the rest sounding choppy.
 
 ---
 
 ## 0:00–0:20 — Cold open
 
-> Here's the same batch of data run through two different systems: a
-> thousand failed payments, about eleven lakh rupees at stake.
+> Here's the same batch of data run through two systems: a thousand failed
+> payments, about eleven lakh rupees at stake.
 >
-> A simple retry bot, basically what most "AI revenue recovery" tools
-> actually are, recovers about fifty-nine thousand, seven hundred and
-> fifty-five rupees more than mine does. But to get there, it breaks a
-> card-network or RBI rule two thousand four hundred and ninety-three
-> times. Mine breaks zero, and that trade-off is what this project's about.
+> A simple retry bot — basically what most "AI revenue recovery" tools
+> actually are — recovers about fifty-nine thousand, seven hundred and
+> fifty-five rupees more than mine, but breaks a card-network or RBI rule
+> two thousand four hundred and ninety-three times to get there. Mine
+> breaks zero. That trade-off is what this project's about.
 
 ---
 
@@ -42,37 +45,35 @@ your delivery.
 
 > A failed payment isn't really one problem. It's five different problems.
 >
-> A card can get declined. A checkout can get abandoned. A subscription
-> payment can bounce. And there are two you've probably never heard of: a
-> payment the bank already approved but the merchant forgot to collect, and
-> one approved after the customer's already given up. Together, those are
-> almost thirteen percent of the money at risk here, with nothing to retry
-> — you just go collect it.
+> A card can decline. A checkout can get abandoned. A subscription can
+> bounce. And two you've probably never heard of: a payment the bank
+> already approved but the merchant forgot to collect, and one approved
+> after the customer's already given up. Those two are almost thirteen
+> percent of the money at risk, with nothing to retry — you just go
+> collect it.
 >
-> On UPI, about eighty-two percent of the payments that did fail are the
-> bank saying no on purpose, and legally, some of those can't be retried.
+> On UPI, about eighty-two percent of failures are the bank saying no on
+> purpose, and legally, some of those can't even be retried.
 
 ---
 
 ## 0:55–1:40 — How it decides what to do
 
-> Every payment that's at risk goes through the same four steps.
+> Every payment at risk goes through the same four steps.
 >
 > First, it figures out what actually happened, not just the error code —
-> about ninety-four percent of the time that's a lookup against Razorpay's
-> own documentation, and the rest has to be genuinely guessed, because the
-> bank doesn't say why it declined.
+> ninety-four percent of the time a lookup against Razorpay's own
+> documentation, the rest genuinely guessed, since the bank doesn't say why.
 >
 > Then, before anything else, it checks a set of rules — eleven right now,
-> covering things like network attempt limits, RBI's notice period,
-> consent, and contact fatigue.
+> covering attempt limits, RBI's notice period, consent, and contact
+> fatigue.
 >
-> Only after that does it check whether acting is worth it, weighing the
-> chance of success against every real cost, including losing the customer
-> for good.
+> Only then does it check whether acting is worth it, weighing the odds
+> against every real cost, including losing the customer for good.
 >
-> Whatever it decides gets saved into a record chained together with
-> hashes, so it can't quietly be edited later.
+> Whatever it decides gets saved into a record chained with hashes, so it
+> can't quietly be edited later.
 
 ---
 
@@ -90,29 +91,28 @@ your delivery.
 
 ## 2:15–2:50 — Comparing the strategies
 
-> I ran four different strategies against the same batch of a thousand
-> events, using the exact same code to score all of them. People usually
-> call the simple, no-diagnosis approach "blind retry", and blind retry wins
-> on raw recovery — but it also makes four thousand six hundred and
-> fifty-two retry attempts, compared to my four hundred and forty-one,
-> contacts customers six times as often, and racks up two thousand four
-> hundred and ninety-three rule violations, compared to zero for mine.
+> I ran four strategies against the same batch, using the same code to
+> score all of them. People usually call the simple, no-diagnosis approach
+> "blind retry", and blind retry wins on raw recovery — but makes four
+> thousand six hundred and fifty-two attempts against my four hundred and
+> forty-one, six times the customer contacts, and two thousand four
+> hundred and ninety-three violations against zero for mine.
 >
-> Those numbers don't depend on any assumption I made about cost — I
-> checked that four ways, including zero cost, and they don't change.
+> Those numbers don't depend on any cost assumption — I checked that four
+> ways, including zero cost, and they don't change.
 
 ---
 
 ## 2:50–3:25 — Testing it by trying to break it
 
-> A test suite that's all green just proves the tests pass, not that they'd
-> catch it if something actually broke. So I built a tool that breaks my
-> own safety rules on purpose and checks if the tests notice.
+> A test suite that's all green just proves the tests pass, not that
+> they'd catch it if something actually broke. So I built a tool that
+> breaks my own safety rules on purpose and checks if the tests notice.
 >
 > *(mutation check runs)* All eight break attempts got caught. Building
 > this also found something worse first: my main safety test was passing
-> without actually testing anything, twice. Both are fixed now, and both
-> are right there in the commit history.
+> without actually testing anything, twice — both fixed now, both right
+> there in the commit history.
 
 ---
 
@@ -131,18 +131,17 @@ your delivery.
 
 ## 3:55–4:20 — Checking it wasn't just luck
 
-> There are a hundred and sixty tests behind all of this, including fifty
-> random batches of simulated payments, all with zero violations, plus one
-> batch built specifically to be a worst case, which also held up.
+> A hundred and sixty tests back this up, including fifty random batches
+> with zero violations across every one, plus one built to be a worst
+> case, which also held up.
 >
-> I also tried a Claude model for the toughest, most ambiguous declines,
-> but measured how good it could actually get before trusting it, and it
-> wasn't enough better to be worth calling an API for.
+> I also tried a Claude model for the toughest declines, but measured its
+> real ceiling first, and it wasn't enough better to be worth calling an
+> API for.
 >
-> And this whole system is deliberately not a free-acting agent — where one
-> wrong automatic decision could mean a real fine, the right call is
-> something bounded a safe agent can operate inside of, not something
-> acting on its own.
+> This whole system is also deliberately not a free-acting agent — where
+> one wrong move could mean a real fine, the right call is something
+> bounded a safe agent operates inside of, not something acting alone.
 
 ---
 
@@ -180,5 +179,5 @@ your delivery.
   mid-way through usually sounds more nervous, not less.
 - **Time an actual recorded take, not a silent read-through.** Reading
   silently in your head always goes faster than speaking out loud. If your
-  first real take comes in past 4:50, trim using the list above instead of
+  first real take comes in past 4:45, trim using the list above instead of
   speeding up.
