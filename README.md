@@ -151,6 +151,10 @@ That engine optimises **the debit attempt, at the gateway layer**. Due optimises
 - a merchant-facing, replayable compliance artifact
 - a **post-`halted` playbook** — native tooling stops where the customer is actually lost
 
+Sourced from Razorpay's own public documentation and conference announcements, not
+insider knowledge — if their internal production behaviour has moved further since,
+that's outside what's verifiable here, and it's not claimed otherwise.
+
 ---
 
 ## Honesty notes
@@ -163,6 +167,9 @@ Things a reviewer would otherwise have to find:
 - **We cut the LLM.** We measured the Bayes-optimal ceiling on that inference subset and
   found ~2 points of residual headroom after a five-rule heuristic. A per-event API call
   could not justify itself, so the classification claim was removed rather than shipped.
+- **This is not a free-acting agent, on purpose.** It's the bounded core a safe agent —
+  human or AI — has to sit inside: the part that makes an illegal or non-compliant
+  action structurally impossible, whatever anything upstream decides is optimal.
 - **Network penalties carry 1.8% of the result.** "Blind retry is expensive because of
   fines" is roughly false. The compliance case stands on regulatory exposure and issuer
   standing, not economics.
@@ -185,7 +192,7 @@ untouched.
 ```bash
 python demo.py                   # every number above, computed live
 python tools/mutation_check.py   # break each safety rule, confirm the tests catch it
-pytest -q                        # 153 tests, 15 property-based
+pytest -q                        # 160 tests, 15 property-based
 python live_demo.py --live       # real Razorpay test-mode payment link
 ```
 
@@ -197,6 +204,8 @@ would fail if the system broke. It found the headline invariant test passing
 
 - [docs/domain-primer.md](docs/domain-primer.md) — the payments reasoning behind every rule
 - [docs/sensitivity.md](docs/sensitivity.md) — where the claims hold and where they fail
+- [docs/faq.md](docs/faq.md) — the hard questions, answered directly (AI/agentic scope,
+  is 11 rules enough, why hasn't this been built already, is the ledger really secure)
 - [docs/build-plan.md](docs/build-plan.md) — scope and schedule
 
 ## Safety

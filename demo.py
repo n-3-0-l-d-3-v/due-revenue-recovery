@@ -110,7 +110,7 @@ def judge_mode(args) -> int:
     rule("VERIFY")
     print("  python demo.py                 full run, ten sections")
     print("  python tools/mutation_check.py break each safety rule, confirm tests catch it")
-    print("  pytest -q                      153 tests, 15 property-based")
+    print("  pytest -q                      160 tests, 15 property-based")
     print(f"\ncompleted in {time.time() - _T0:.1f}s\n")
     return 0
 

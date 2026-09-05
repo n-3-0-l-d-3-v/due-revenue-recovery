@@ -145,11 +145,18 @@ omissions:
 - **`ESCALATE_HUMAN` and `STOP_UNCOLLECTIBLE` are ungated.** They move no money and
   contact nobody.
 
+**11 rules is the pattern, not a complete rulebook.** Every rule is the same shape —
+citation, params, one predicate — so adding rule #12 or #100 is one more `rules.yaml`
+entry and one more function, not a redesign. The 11 here cover the highest-cited real
+constraints in Indian digital payments (network attempt caps, RBI e-mandate, consent,
+contact fatigue). PCI-DSS specifics, state consumer-protection law, and cross-border
+rules are real and absent. See `docs/faq.md` for the full scope discussion.
+
 ---
 
 ## 5. Testing
 
-153 tests. The interesting ones are not the unit tests.
+160 tests. The interesting ones are not the unit tests.
 
 **Property-based (15).** Hypothesis generates ~250 event shapes per property, including
 degenerate ones. Universally quantified: nothing permitted was also blocked · terminal
@@ -204,8 +211,12 @@ the same durable store as the ledger, keyed by (event_id, action), written *befo
 outbound call.
 
 **Tamper-evident, not tamper-proof.** Write access allows recomputing the chain forward.
-Needs an external anchor — publishing the head hash somewhere the same actor does not
-control. `Ledger.head` and `compliance_certificate()` exist for exactly that.
+This is not unique to this design — the same is true of Git (force-push rewrites
+history) and of any single blockchain node in isolation (a chain's real security comes
+from independent parties, not from hashing alone). The real fix has a name — external
+anchoring: publish the head hash somewhere the same actor does not control (a
+third-party notary, WORM storage). `Ledger.head` and `compliance_certificate()` exist
+for exactly that.
 
 **Every economic parameter is assumed.** None is measured from real merchant data.
 `docs/sensitivity.md` reports how hard each is working; one of them carries the entire
@@ -219,3 +230,13 @@ hidden in an aggregate.
 generative parameter is committed, but we wrote the generator. Compliance, audit
 integrity, replay determinism, and action counts are unaffected by this. Recovery
 figures are not, and are labelled accordingly.
+
+**No agentic behaviour, on purpose.** This is the bounded decision core a safe agent —
+human-run or AI-run — sits inside, not a free-acting agent itself. In a domain where a
+wrong autonomous action is a real fine or a real compliance breach, constraining the
+agent is the correct call, not a missing feature.
+
+**Out of scope, named rather than discovered:** B2B receivables/invoices, any market
+outside India/RBI, multi-tenant merchant configuration, and a real persistence layer
+(everything here is in-memory during a run; the JSONL export is the only durability
+story). See `docs/faq.md`.
