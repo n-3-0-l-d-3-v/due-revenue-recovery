@@ -16,7 +16,7 @@ It found two real weaknesses on first run:
      focused strategy plus `test_the_retry_cap_actually_binds`, which guards the
      guard.
 
-And a third, found while hardening this tool itself on Windows:
+And two more, found while hardening this tool itself on Windows:
 
   3. `Path.write_text()` opens its target in *text* mode, which silently
      translates `\n` to the OS line ending on write — on Windows that means
@@ -25,10 +25,20 @@ And a third, found while hardening this tool itself on Windows:
      Worse, `write_text()` truncates the file before writing, in two separate
      steps with no atomicity — if the process is interrupted between them (a
      killed terminal, an antivirus scan grabbing the file mid-write), the file
-     is left at 0 bytes, permanently, until someone notices and restores it
-     from git. Fixed below: read and write raw bytes (no newline translation),
-     and write via a temp file + atomic replace, so a file is either the old
-     content or the new content, never neither.
+     is left at 0 bytes. Fixed: read and write raw bytes (no newline
+     translation), and write via a temp file + atomic replace, so a file is
+     either the old content or the new content, never neither.
+
+  4. Atomicity alone wasn't enough. If the process is interrupted *between*
+     mutating a file and restoring it — a Ctrl+C during the ~15s pytest
+     subprocess call, most likely — the file is left holding the *mutated*
+     value, indefinitely, with no error and no trace beyond `git status`.
+     That's not a corrupted file (it still parses, still has every expected
+     string), so the truncation guard below doesn't catch it, and a later run
+     would silently mutate on top of an already-mutated baseline. Fixed with
+     two layers: a preflight check refusing to run at all unless these files
+     exactly match what's committed, and a try/finally around every
+     mutate-test-restore cycle so a restore happens even on Ctrl+C.
 
 Run:  python tools/mutation_check.py
 
@@ -64,6 +74,43 @@ def _atomic_write(path: pathlib.Path, data: bytes) -> None:
         raise
 
 
+def _clean_stray_temp_files() -> None:
+    """A leftover `.rules.yaml.xxxxx` file means a prior run of THIS script
+    died between mkstemp and os.replace — harmless on its own since the real
+    file is untouched at that point, but worth sweeping up so it doesn't
+    linger as a red herring in `git status` or a file listing."""
+    for target in (RULES, ENGINE):
+        for stray in target.parent.glob(f".{target.name}.*"):
+            stray.unlink(missing_ok=True)
+
+
+def _refuse_if_working_tree_is_dirty() -> None:
+    """The one check that actually catches weakness #4: if either file
+    already differs from what's committed, some earlier process left a
+    mutation half-applied (or someone's mid-edit) — either way, mutating on
+    top of that instead of the real baseline would produce misleading
+    results, or quietly bake a disabled safety rule into "clean" repo."""
+    result = subprocess.run(
+        ["git", "status", "--porcelain", "--", str(RULES), str(ENGINE)],
+        capture_output=True, text=True,
+    )
+    dirty = result.stdout.strip()
+    if dirty:
+        sys.exit(
+            "ABORT: due/core/policy/rules.yaml and/or engine.py already differ "
+            "from what's committed:\n"
+            f"{dirty}\n\n"
+            "This usually means a previous run of this script was interrupted "
+            "(Ctrl+C during the pytest subprocess) and left a mutated value on "
+            "disk instead of restoring it. Running mutations on top of that "
+            "would be meaningless.\n"
+            "Fix: git checkout -- due/core/policy/engine.py due/core/policy/rules.yaml"
+        )
+
+
+_clean_stray_temp_files()
+_refuse_if_working_tree_is_dirty()
+
 ORIG_RULES = _read_bytes(RULES)
 ORIG_ENGINE = _read_bytes(ENGINE)
 
@@ -71,7 +118,8 @@ ORIG_ENGINE = _read_bytes(ENGINE)
 # renamed or the file underneath it was corrupted by something outside this
 # script entirely. Silently reporting SKIP either way is the wrong failure
 # mode for a safety tool — it should refuse to run on a file it doesn't
-# recognise, not guess quietly.
+# recognise, not guess quietly. (The dirty-tree check above catches a subtly
+# *wrong* file; this catches a grossly truncated one.)
 if b"class PolicyEngine" not in ORIG_ENGINE or len(ORIG_ENGINE) < 5000:
     sys.exit(
         f"ABORT: {ENGINE} looks corrupted or truncated ({len(ORIG_ENGINE)} bytes, "
@@ -101,13 +149,18 @@ for name, path, old, new in MUTATIONS:
     orig = ORIG_RULES if path == RULES else ORIG_ENGINE
     if old not in orig:
         results.append((name, "SKIP (pattern not found)")); continue
-    _atomic_write(path, orig.replace(old, new, 1))
-    r = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q", "-x", "--no-header"],
-                       capture_output=True, text=True)
-    caught = r.returncode != 0
-    line = [l for l in r.stdout.splitlines() if "failed" in l or "passed" in l]
-    results.append((name, ("CAUGHT   " if caught else "SURVIVED ") + (line[-1] if line else "")))
-    _atomic_write(path, orig)
+    try:
+        _atomic_write(path, orig.replace(old, new, 1))
+        r = subprocess.run([sys.executable, "-m", "pytest", "tests/", "-q", "-x", "--no-header"],
+                           capture_output=True, text=True)
+        caught = r.returncode != 0
+        line = [l for l in r.stdout.splitlines() if "failed" in l or "passed" in l]
+        results.append((name, ("CAUGHT   " if caught else "SURVIVED ") + (line[-1] if line else "")))
+    finally:
+        # Runs even on Ctrl+C or a pytest crash, so a mutated value is never
+        # left on disk when this loop iteration ends — the exact gap that
+        # let weakness #4 through before.
+        _atomic_write(path, orig)
 
 _atomic_write(RULES, ORIG_RULES)
 _atomic_write(ENGINE, ORIG_ENGINE)
