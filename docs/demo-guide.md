@@ -66,11 +66,10 @@ a track explicitly marked royalty-free/CC0 from either source above.
 **Opening sting (silent, ~2 seconds, before the 0:00 mark below starts):** a
 title card — project name, one-line tagline, nothing else — that animates in
 and out before your voice begins. This sits *before* the pitch script's
-0:00, so it doesn't eat into your spoken content. The script itself runs
-~700 words, written as full sentences on purpose rather than clipped for
-time — see the honest timing math at the top of `docs/pitch-script.md`
-before you record; it's closer to the 5:00 cap than a word-count guess
-would suggest.
+0:00, so it doesn't eat into your spoken content. The script itself is
+tightened to a hard 4:00 max, in full natural sentences — see the honest
+timing math at the top of `docs/pitch-script.md` before you record; it's
+genuinely tight against that 4:00, not comfortably under it.
 
 **Closing card (silent, ~2 seconds, after "thanks for watching"):** same
 title treatment, plus the repo and dashboard URLs as plain, legible text —
@@ -96,9 +95,9 @@ is what makes it read as "produced," not "screen-recorded."
 The **[ACK] overlay is the whole premium-vs-amateur difference.** It is how
 you make the video itself argue "I already thought of your objection" instead
 of hoping the judge notices you handled it. Use it only at the moments marked
-below — this guide places about nine across five minutes, each tied to a real
-honesty point (a limitation, a boundary, a bug found and fixed), not to a
-flex. More than that reads as noise; fewer and a graded criterion about
+below — this guide places several across the four minutes, each tied to a
+real honesty point (a limitation, a boundary, a bug found and fixed), not to
+a flex. More than that reads as noise; fewer and a graded criterion about
 acknowledging risk goes unanswered on screen.
 
 ---
@@ -121,7 +120,7 @@ is the single most obvious "this was assembled carelessly" tell.
 
 ---
 
-## 0:00–0:20 — Cold open
+## 0:00–0:15 — Cold open
 
 **Visual:** Split screen, built in post, not live: left half is the dashboard's
 four-strategy table already fully rendered and still; right half is a
@@ -142,7 +141,7 @@ answers it before they finish forming the thought.
 
 ---
 
-## 0:20–0:55 — The problem nobody names correctly
+## 0:15–0:45 — The problem nobody names correctly
 
 **Visual:** Full-screen dashboard, scrolled to the "what actually happens to
 1,000 failed payments" breakdown. As each cause is named in voice, that row
@@ -161,7 +160,7 @@ named regulation, on screen, the instant you say it.
 
 ---
 
-## 0:55–1:40 — How it actually decides
+## 0:45–1:20 — How it actually decides
 
 **Visual:** Not the dashboard. Cut to a clean four-box flow diagram (build
 once, animate stage-by-stage): `DIAGNOSE → GATE → SCORE → LEDGER`. Each box
@@ -192,7 +191,7 @@ screen instead of being said out loud.
 
 ---
 
-## 1:40–2:15 — One real refusal
+## 1:20–1:50 — One real refusal
 
 **Visual:** Cut live to the dashboard's refusal walkthrough section. This is
 proof moment #1 — treat it as the first real "camera stops lying to you"
@@ -212,7 +211,7 @@ do not compress it.
 
 ---
 
-## 2:15–2:50 — The comparison, and the split that matters
+## 1:50–2:20 — The comparison, and the split that matters
 
 **Visual:** Scroll to the four-strategy table, then to the Tier A / Tier B
 cards immediately below it. No cuts — one continuous scroll, so the viewer
@@ -231,7 +230,7 @@ just check this once" without needing a spoken sentence to do it.
 
 ---
 
-## 2:50–3:25 — Breaking it on purpose
+## 2:20–2:50 — Breaking it on purpose
 
 **Visual:** Hard cut to Terminal B, full-screen, no overlay chrome at all —
 this is the one moment the video should look like a real terminal and nothing
@@ -254,7 +253,7 @@ let the plain statement do the work.
 
 ---
 
-## 3:25–3:55 — Where I'm wrong
+## 2:50–3:15 — Where I'm wrong
 
 **Visual:** Cut to the dashboard's sensitivity slider. **Drag it live, on
 camera** — never a before/after screenshot pair.
@@ -273,25 +272,30 @@ under any time pressure.
 
 ---
 
-## 3:55–4:20 — Not luck, and not just rules
+## 3:15–3:35 — Not luck, and not just rules
 
 **Visual:** Terminal C, `pytest -q` already run, output visible (160 passed).
 Then a quick cut to a small pre-rendered chart: 50 dots, one per seed, 49 of
 them one color, 1 (seed 18) a different color and labeled — built once in
 advance since the full 50-seed sweep takes too long to run live.
 
-**Motion:** On "quadruple the normal outage rate," a small stat card slides in:
-`4x issuer outage · 0 violations` — answering "how hard did you actually push
+**Motion:** On "plus a worst-case batch," a small stat card slides in: `4x
+issuer outage · 0 violations` — answering "how hard did you actually push
 it" with a number instead of an adjective.
 
-**[ACK]** On "forty-six point six... forty-eight point seven... I cut it," show
-three bars (majority-class floor, heuristic, theoretical ceiling) with the gap
-between the last two visually tiny compared to the gap before it — the chart
-itself argues "not worth it" before you finish the sentence.
+**[ACK]** The script doesn't say the Claude-classifier story out loud at
+all anymore — the bounded-agent point right after it covers similar ground
+on its own — but the numbers are worth keeping on screen regardless. In the
+gap right before the bounded-agent line, show three bars (majority-class
+floor, heuristic, theoretical ceiling: 43.1% · 46.6% · 48.7%) with the gap
+between the last two visually tiny compared to the gap before it, plus a
+one-line caption: "tried a Claude classifier here — measured, then cut."
+The chart and caption argue "not worth it" on their own, without needing a
+voice to say the percentages.
 
 ---
 
-## 4:20–4:45 — Close
+## 3:35–4:00 — Close
 
 **Visual:** Back to the dashboard, scrolled to the "what building this
 actually caught" timeline.
@@ -312,7 +316,7 @@ the momentum you just built.
 
 - **Record in segments, not one continuous take.** The mutation-check and
   pytest beats are the easiest to re-shoot in isolation if you flub a line —
-  you should never need to redo all five minutes for one word in the middle.
+  you should never need to redo all four minutes for one word in the middle.
 - **Audio quality matters more than video polish.** A judge will forgive
   slightly soft video; they will not forgive audio they have to strain to
   hear. A USB or headset mic beats a laptop mic by a wide margin.
@@ -330,16 +334,16 @@ the momentum you just built.
 
 ---
 
-## What to cut, in this exact order, if you're over 5:00
+## What to cut, in this exact order, if you're over 4:00
 
-1. The 0:20–0:50 problem section — trim the row-highlight animation, keep the
+1. The 0:15–0:45 problem section — trim the row-highlight animation, keep the
    spoken content and the single citation chip.
 2. The closing timeline in the last beat — show two entries instead of all of
    them.
-3. The 50-seed chart in the 3:45–4:10 beat — state the numbers verbally instead
+3. The 50-seed chart in the 3:15–3:35 beat — state the numbers verbally instead
    of showing the chart.
-4. **Never cut:** the refusal walkthrough (1:35–2:10), the live mutation check
-   (2:45–3:15), or the live sensitivity slider (3:15–3:45). Those three
+4. **Never cut:** the refusal walkthrough (1:20–1:50), the live mutation check
+   (2:20–2:50), or the live sensitivity slider (2:50–3:15). Those three
    sequences, plus their **[ACK]** overlays, are the entire case for hiring
    you rather than just the entire case for the product.
 

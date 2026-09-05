@@ -11,73 +11,67 @@ Companion doc: `docs/demo-guide.md` has the shot-by-shot visual plan — what's
 on screen at every second, including on-screen text that carries some of the
 detail so you don't have to say every number out loud.
 
-**~715 spoken words, tightened to land inside 4:00–4:45.** Almost every
-point from the earlier version is still here, just said more economically.
-Two smaller ones moved rather than disappeared: the "11 rules is a pattern,
-not a finished rulebook" point and the tamper-evident/external-anchor detail
-are now on-screen text in `docs/demo-guide.md` instead of spoken lines —
-still in the video, just not narrated, which is how a couple of minutes get
-saved without actually cutting content.
+**~615 spoken words, tightened to fit a hard 4:00 max.** Almost every point
+from earlier versions is still here, said more economically. Two smaller
+ones moved rather than disappeared: the "11 rules is a pattern, not a
+finished rulebook" point and the tamper-evident/external-anchor detail are
+now on-screen text in `docs/demo-guide.md` instead of spoken lines — still
+in the video, just not narrated. The Claude-classifier detail (the ceiling
+measurement before deciding not to use it) moved the same way — it's a
+production-script overlay now, not a spoken line, since the bounded-agent
+point right after it covers the same ground on its own.
 
-At a calm, natural pace this runs roughly 4:15–4:30 of talking; real
-recording adds a bit more (a breath, a pause while a terminal loads), which
-is where the room to 4:45 comes from. Do one full recorded take before
-touching the video edit and check where you land. If you're still over, use
-the cut list near the bottom — a couple of sentences can come out cleanly
-without the rest sounding choppy.
+At a calm, natural pace this runs roughly 3:50–4:00 of talking; real
+recording adds a small amount on top (a breath, a couple of seconds while a
+terminal loads), so this is genuinely tight against 4:00, not comfortably
+under it. Do one full recorded take before touching the video edit and
+check exactly where you land — if it's still over, use the cut list near
+the bottom rather than speeding up your delivery.
 
 ---
 
-## 0:00–0:20 — Cold open
+## 0:00–0:15 — Cold open
 
-> Here's the same batch of data run through two systems: a thousand failed
+> Here's the same batch run through two systems: a thousand failed
 > payments, about eleven lakh rupees at stake.
 >
 > A simple retry bot — basically what most "AI revenue recovery" tools
-> actually are — recovers about fifty-nine thousand, seven hundred and
-> fifty-five rupees more than mine, but breaks a card-network or RBI rule
-> two thousand four hundred and ninety-three times to get there. Mine
-> breaks zero. That trade-off is what this project's about.
+> are — recovers fifty-nine thousand, seven hundred and fifty-five rupees
+> more than mine, but breaks a card-network or RBI rule two thousand four
+> hundred and ninety-three times doing it. Mine breaks zero — that
+> trade-off is what this project's about.
 
 ---
 
-## 0:20–0:55 — The problem
+## 0:15–0:45 — The problem
 
-> A failed payment isn't really one problem. It's five different problems.
+> A failed payment isn't one problem. It's five.
 >
-> A card can decline. A checkout can get abandoned. A subscription can
-> bounce. And two you've probably never heard of: a payment the bank
-> already approved but the merchant forgot to collect, and one approved
-> after the customer's already given up. Those two are almost thirteen
-> percent of the money at risk, with nothing to retry — you just go
-> collect it.
+> A card can decline, a checkout can get abandoned, a subscription can
+> bounce, and there are two you've probably never heard of: a payment the
+> bank approved but the merchant forgot to collect, and one approved after
+> the customer gave up. Those two are almost thirteen percent of the money
+> at risk, and there's nothing to retry.
 >
 > On UPI, about eighty-two percent of failures are the bank saying no on
-> purpose, and legally, some of those can't even be retried.
+> purpose, and some of those can't legally be retried.
 
 ---
 
-## 0:55–1:40 — How it decides what to do
+## 0:45–1:20 — How it decides what to do
 
-> Every payment at risk goes through the same four steps.
->
-> First, it figures out what actually happened, not just the error code —
-> ninety-four percent of the time a lookup against Razorpay's own
-> documentation, the rest genuinely guessed, since the bank doesn't say why.
->
-> Then, before anything else, it checks a set of rules — eleven right now,
-> covering attempt limits, RBI's notice period, consent, and contact
-> fatigue.
->
-> Only then does it check whether acting is worth it, weighing the odds
-> against every real cost, including losing the customer for good.
->
-> Whatever it decides gets saved into a record chained with hashes, so it
-> can't quietly be edited later.
+> Every payment at risk goes through four steps: it figures out what
+> actually happened, not just the error code (ninety-four percent of the
+> time a lookup against Razorpay's docs, the rest genuinely guessed), it
+> checks a set of rules (eleven right now, covering attempt limits, RBI's
+> notice period, consent, and contact fatigue), it weighs whether acting
+> is worth it against every real cost, including losing the customer for
+> good, and it saves the decision into a record chained with hashes, so it
+> can't be quietly edited later.
 
 ---
 
-## 1:40–2:15 — One real example
+## 1:20–1:50 — One real example
 
 > Here's one actual case. Five thousand two hundred and eighty-three
 > rupees, insufficient funds. Seven rules get checked, and six of them
@@ -89,78 +83,73 @@ without the rest sounding choppy.
 
 ---
 
-## 2:15–2:50 — Comparing the strategies
+## 1:50–2:20 — Comparing the strategies
 
 > I ran four strategies against the same batch, using the same code to
-> score all of them. People usually call the simple, no-diagnosis approach
-> "blind retry", and blind retry wins on raw recovery — but makes four
-> thousand six hundred and fifty-two attempts against my four hundred and
-> forty-one, six times the customer contacts, and two thousand four
-> hundred and ninety-three violations against zero for mine.
+> score them. People call the simple approach "blind retry", and blind retry wins on raw recovery — but makes four thousand six hundred and
+> fifty-two attempts against my four hundred and forty-one, six times the
+> contacts, and two thousand four hundred and ninety-three violations
+> against zero.
 >
-> Those numbers don't depend on any cost assumption — I checked that four
-> ways, including zero cost, and they don't change.
+> Those numbers don't depend on any cost assumption; I checked four ways,
+> including zero cost, and they don't move.
 
 ---
 
-## 2:50–3:25 — Testing it by trying to break it
+## 2:20–2:50 — Testing it by trying to break it
 
-> A test suite that's all green just proves the tests pass, not that
-> they'd catch it if something actually broke. So I built a tool that
-> breaks my own safety rules on purpose and checks if the tests notice.
+> A green test suite proves the tests pass, not that they'd catch a real
+> break. So I built a tool that breaks my own safety rules and checks if
+> the tests notice.
 >
 > *(mutation check runs)* All eight break attempts got caught. Building
-> this also found something worse first: my main safety test was passing
-> without actually testing anything, twice — both fixed now, both right
-> there in the commit history.
+> this also found something worse: my main safety test was passing
+> without testing anything, twice — both fixed now, both in the commit
+> history.
 
 ---
 
-## 3:25–3:55 — Where the claim stops holding
+## 2:50–3:15 — Where the claim stops holding
 
-> The claim that my approach is worth more rests on one assumption: that
-> repeatedly contacting a customer costs something, even a little.
+> My "worth more" claim rests on one assumption: that repeatedly contacting
+> a customer costs something, even a little.
 >
 > So let's see what happens if that cost is zero. *(drag the slider to
 > zero)*
 >
-> The simple retry strategy wins there, by about nine percent, and that's
-> printed right on the page, with a test making sure it stays that way.
+> The simple strategy wins there, by about nine percent, printed right on
+> the page, with a test making sure it stays that way.
 
 ---
 
-## 3:55–4:20 — Checking it wasn't just luck
+## 3:15–3:35 — Checking it wasn't just luck
 
 > A hundred and sixty tests back this up, including fifty random batches
-> with zero violations across every one, plus one built to be a worst
-> case, which also held up.
+> with zero violations every time, plus a worst-case batch, which also
+> held up.
 >
-> I also tried a Claude model for the toughest declines, but measured its
-> real ceiling first, and it wasn't enough better to be worth calling an
-> API for.
->
-> This whole system is also deliberately not a free-acting agent — where
-> one wrong move could mean a real fine, the right call is something
-> bounded a safe agent operates inside of, not something acting alone.
+> This is also deliberately not a free-acting agent — where one wrong move
+> could mean a real fine, the right call is something bounded a safe agent
+> operates inside of.
 
 ---
 
-## 4:20–4:45 — Closing
+## 3:35–4:00 — Closing
 
-> Razorpay already does smart retry timing at the gateway level — I'm not
-> claiming to have beaten that. This works one layer above it, on parts a
-> gateway can't actually see.
+> Razorpay already does smart retry timing at the gateway — I'm not
+> claiming to beat that. This works one layer above it, on parts a gateway
+> can't see.
 >
-> Every number I've shown you comes from one command you can run yourself,
-> right now. Thanks for watching.
+> Every number here comes from one command you can run yourself, right
+> now. Thanks for watching.
 
 ---
 
 ## If you're still over time, cut in this order
 
 1. The line about UPI declines being on-purpose, in the problem section.
-2. The Claude-classifier sentence in "checking it wasn't just luck" — the
-   bounded-agent point after it can stand on its own.
+2. The "eleven right now, covering..." rule list in "how it decides" — say
+   just "a set of rules" and let the on-screen list carry the detail.
 3. **Never cut:** the one real example, the mutation-check moment, or the
    sensitivity slider. Those three carry most of the actual proof.
 
@@ -179,5 +168,5 @@ without the rest sounding choppy.
   mid-way through usually sounds more nervous, not less.
 - **Time an actual recorded take, not a silent read-through.** Reading
   silently in your head always goes faster than speaking out loud. If your
-  first real take comes in past 4:45, trim using the list above instead of
+  first real take comes in past 4:00, trim using the list above instead of
   speeding up.
